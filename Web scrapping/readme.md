@@ -1,4 +1,4 @@
-# 🚗 Sri Lanka Road Accidents Data Pipeline
+# 🚗 Sri Lanka Road Accidents Data 
 
 A data engineering pipeline that scrapes road accident news from **Hiru News**, converts it into structured CSV format, and prepares it for **Machine Learning** analysis.
 
