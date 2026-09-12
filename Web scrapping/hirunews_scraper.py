@@ -3,11 +3,8 @@ import json
 import time
 import os
 import re
-import sys
-import threading
 from datetime import datetime
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # ============================================================
@@ -36,23 +33,12 @@ PROGRESS_FILE = os.path.join(
 START_PAGE = 0
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/120.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0"
 }
 
-# ---- SPEED SETTINGS ----
-REQUEST_DELAY = 0.0        # batch අතර delay (seconds)
-BATCH_SIZE = 15            # එකවර fetch කරන pages ගණන
-MAX_WORKERS = 8            # concurrent threads
-TIMEOUT = 15               # per-request timeout
-MAX_RETRIES = 4
+REQUEST_DELAY = 0.1
 
-SAVE_EVERY_N_PAGES = 10    # disk write කරන frequency
-COUNTER_EVERY_N_PAGES = 50 # year counter print කරන frequency
-
-# ---- VERBOSE MODE ----
-VERBOSE = False            # True කරොත් debug prints එනවා
+MAX_RETRIES = 5
 
 
 # ============================================================
@@ -62,130 +48,47 @@ VERBOSE = False            # True කරොත් debug prints එනවා
 ACCIDENT_KEYWORDS = [
     "රිය අනතුර",
     "මාර්ග අනතුර",
+    
     "අනතුරක්",
     "අනතුරකින්",
     "අනතුරින්"
 ]
 
-# Pre-computed text keys (avoid rebuilding list each call)
-TEXT_KEYS = (
-    "sinhala_title",
-    "sinhala_story",
-    "title", "heading", "news_title", "name",
-    "description", "summary", "content", "body",
-    "details", "news", "text", "post_title",
-    "post_content", "excerpt"
-)
-
-DATE_KEYS = (
-    "sinhala_added_date",
-    "date",
-    "published_date",
-    "publish_date",
-    "created_at",
-    "publishedAt",
-    "published",
-    "datetime",
-    "created",
-    "time",
-    "news_date",
-    "post_date"
-)
-
-ID_KEYS = (
-    "sinhala_art_id",
-    "id",
-    "news_id",
-    "newsId",
-    "article_id",
-    "articleId",
-    "url",
-    "link",
-    "slug"
-)
-
-# Pre-compiled regex (huge speedup vs re.search each call)
-YEAR_REGEX = re.compile(r"(19|20)\d{2}")
-
 
 # ============================================================
-# SESSION (connection reuse)
-# ============================================================
-
-SESSION = requests.Session()
-SESSION.headers.update(HEADERS)
-
-# Thread lock for shared counters / print
-PRINT_LOCK = threading.Lock()
-
-
-# ============================================================
-# LOGGING HELPERS
-# ============================================================
-
-def log(message):
-    """Only print when VERBOSE is on."""
-    if VERBOSE:
-        with PRINT_LOCK:
-            sys.stdout.write("\n" + message + "\n")
-            sys.stdout.flush()
-
-
-def log_important(message):
-    """Always print — for milestones."""
-    with PRINT_LOCK:
-        sys.stdout.write("\n" + message + "\n")
-        sys.stdout.flush()
-
-
-def update_progress(page, total, added, dup, not_acc):
-    """Overwrite a single line — no scrollback spam."""
-    if VERBOSE:
-        return
-    line = (
-        f"\r→ Page {page:<6} | "
-        f"Total: {total:<7} | "
-        f"+Added: {added:<5} | "
-        f"Dup: {dup:<5} | "
-        f"NotAcc: {not_acc:<5}"
-    )
-    with PRINT_LOCK:
-        sys.stdout.write(line)
-        sys.stdout.flush()
-
-
-# ============================================================
-# SETUP
+# CREATE DIRECTORIES AND FILES
 # ============================================================
 
 def setup_directories_and_files():
 
     if not os.path.exists(OUTPUT_DIR):
+
         try:
             os.makedirs(OUTPUT_DIR, exist_ok=True)
-            log(f"[SETUP] Created directory: {OUTPUT_DIR}")
+            print(f"[SETUP] Created directory: {OUTPUT_DIR}")
         except Exception as error:
-            log(f"[SETUP] ERROR creating directory: {error}")
+            print(f"[SETUP] ERROR creating directory: {error}")
             return False
     else:
-        log(f"[SETUP] Directory already exists: {OUTPUT_DIR}")
+        print(f"[SETUP] Directory already exists: {OUTPUT_DIR}")
 
     if not os.path.exists(OUTPUT_FILE):
+
         try:
             with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
                 json.dump([], file, ensure_ascii=False, indent=2)
-            log(f"[SETUP] Created empty file: {OUTPUT_FILE}")
+            print(f"[SETUP] Created empty file: {OUTPUT_FILE}")
         except Exception as error:
-            log(f"[SETUP] ERROR creating file: {error}")
+            print(f"[SETUP] ERROR creating file: {error}")
             return False
     else:
-        log(f"[SETUP] File already exists: {OUTPUT_FILE}")
+        print(f"[SETUP] File already exists: {OUTPUT_FILE}")
 
     return True
 
 
 # ============================================================
-# PROGRESS (file)
+# SAVE PROGRESS
 # ============================================================
 
 def save_progress(page):
@@ -196,15 +99,25 @@ def save_progress(page):
         pass
 
 
+# ============================================================
+# LOAD PROGRESS
+# ============================================================
+
 def load_progress():
     if not os.path.exists(PROGRESS_FILE):
         return None
+
     try:
         with open(PROGRESS_FILE, "r", encoding="utf-8") as file:
-            return json.load(file).get("last_page")
+            data = json.load(file)
+            return data.get("last_page")
     except Exception:
         return None
 
+
+# ============================================================
+# CLEAR PROGRESS
+# ============================================================
 
 def clear_progress():
     if os.path.exists(PROGRESS_FILE):
@@ -215,7 +128,7 @@ def clear_progress():
 
 
 # ============================================================
-# FETCH API PAGE (single)
+# FETCH API PAGE
 # ============================================================
 
 def fetch_page(page):
@@ -228,60 +141,51 @@ def fetch_page(page):
     for attempt in range(1, MAX_RETRIES + 1):
 
         try:
-            response = SESSION.get(
+
+            print()
+            print(f"Fetching page {page} (attempt {attempt}/{MAX_RETRIES})...")
+
+            response = requests.get(
                 BASE_URL,
                 params=params,
-                timeout=TIMEOUT
+                headers=HEADERS,
+                timeout=60
             )
+
             response.raise_for_status()
 
             try:
-                return response.json()
+                data = response.json()
             except ValueError:
-                log(f"Page {page}: invalid JSON")
+                print("API did not return valid JSON.")
+                print("Response preview:")
+                print(response.text[:500])
                 return None
+
+            return data
 
         except requests.RequestException as error:
-            log(f"Page {page} attempt {attempt}: {error}")
+
+            print(f"Request error: {error}")
+
             if attempt < MAX_RETRIES:
-                # exponential backoff: 1s, 2s, 4s
-                time.sleep(min(2 ** (attempt - 1), 4))
+                print("Retrying in 5 seconds...")
+                time.sleep(5)
             else:
+                print("Maximum retries reached.")
                 return None
 
+        except KeyboardInterrupt:
+            print()
+            print("User interrupted. Stopping safely.")
+            return None
+
         except Exception as error:
-            log(f"Page {page} unexpected: {error}")
+
+            print(f"Unexpected error: {error}")
             return None
 
     return None
-
-
-# ============================================================
-# FETCH BATCH (concurrent)
-# ============================================================
-
-def fetch_batch(start_page, batch_size, max_workers):
-    """Fetch multiple pages concurrently. Returns dict {page: data}."""
-
-    pages = list(range(start_page, start_page + batch_size))
-    results = {}
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-
-        future_to_page = {
-            executor.submit(fetch_page, p): p for p in pages
-        }
-
-        for future in as_completed(future_to_page):
-            p = future_to_page[future]
-            try:
-                results[p] = future.result()
-            except Exception as error:
-                log(f"Batch future page {p}: {error}")
-                results[p] = None
-
-    # Return in page order
-    return {p: results[p] for p in sorted(results)}
 
 
 # ============================================================
@@ -294,7 +198,10 @@ def extract_news(data):
         return data
 
     if isinstance(data, dict):
-        for key in ("data", "news", "results", "articles", "items"):
+
+        possible_keys = ["data", "news", "results", "articles", "items"]
+
+        for key in possible_keys:
             value = data.get(key)
             if isinstance(value, list):
                 return value
@@ -307,64 +214,140 @@ def extract_news(data):
 
 
 # ============================================================
-# FILTERS
+# CHECK IF NEWS IS ABOUT ROAD ACCIDENT
 # ============================================================
 
 def is_road_accident(item):
-    """Fast keyword check."""
-    combined = []
-    for key in TEXT_KEYS:
-        v = item.get(key)
-        if v:
-            combined.append(str(v))
 
-    text = " ".join(combined)
+    text_parts = []
+
+    possible_text_keys = [
+        "sinhala_title",
+        "sinhala_story",
+        "title", "heading", "news_title", "name",
+        "description", "summary", "content", "body",
+        "details", "news", "text", "post_title",
+        "post_content", "excerpt"
+    ]
+
+    for key in possible_text_keys:
+        value = item.get(key)
+        if value:
+            text_parts.append(str(value))
+
+    for value in item.values():
+        if isinstance(value, str):
+            text_parts.append(value)
+
+    combined_text = " ".join(text_parts)
 
     for keyword in ACCIDENT_KEYWORDS:
-        if keyword in text:
+        if keyword in combined_text:
             return True
 
     return False
 
 
+# ============================================================
+# GET DATE
+# ============================================================
+
 def get_date_value(item):
-    for key in DATE_KEYS:
+
+    possible_keys = [
+        "sinhala_added_date",
+        "date",
+        "published_date",
+        "publish_date",
+        "created_at",
+        "publishedAt",
+        "published",
+        "datetime",
+        "created",
+        "time",
+        "news_date",
+        "post_date"
+    ]
+
+    for key in possible_keys:
+
         value = item.get(key)
+
         if value is not None:
+
             value = str(value).strip()
+
             if value:
                 return value
+
     return ""
 
 
+# ============================================================
+# GET YEAR
+# ============================================================
+
 def get_year(item):
+
     date_value = get_date_value(item)
+
     if not date_value:
         return None
-    match = YEAR_REGEX.search(date_value)
+
+    match = re.search(r"(19|20)\d{2}", date_value)
+
     if match:
         try:
             return int(match.group())
         except ValueError:
             return None
+
     return None
 
 
-def is_valid_year(item):
-    year = get_year(item)
-    if year is None:
-        return True
-    return (START_YEAR <= year <= END_YEAR)
+# ============================================================
+# CHECK YEAR
+# ============================================================
 
+def is_valid_year(item):
+
+    year = get_year(item)
+
+    if year is not None:
+        return (START_YEAR <= year <= END_YEAR)
+
+    return True
+
+
+# ============================================================
+# GET NEWS ID
+# ============================================================
 
 def get_news_id(item):
-    for key in ID_KEYS:
+
+    possible_keys = [
+        "sinhala_art_id",
+        "id",
+        "news_id",
+        "newsId",
+        "article_id",
+        "articleId",
+        "url",
+        "link",
+        "slug"
+    ]
+
+    for key in possible_keys:
+
         value = item.get(key)
+
         if value is not None:
+
             value = str(value).strip()
+
             if value:
                 return value
-    # fallback — but expensive; only if no ID found
+
     return json.dumps(item, ensure_ascii=False, sort_keys=True)
 
 
@@ -375,40 +358,52 @@ def get_news_id(item):
 def load_existing_data():
 
     if not os.path.exists(OUTPUT_FILE):
-        log("No existing JSON file found. Starting empty.")
+        print("No existing JSON file found.")
+        print("Starting with an empty dataset.")
         return []
 
     if os.path.getsize(OUTPUT_FILE) == 0:
-        log("Existing JSON file is empty. Starting empty.")
+        print("Existing JSON file is empty.")
+        print("Starting with an empty dataset.")
         return []
 
     try:
+
         with open(OUTPUT_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
 
         if isinstance(data, list):
-            log(f"Loaded {len(data)} existing records.")
+            print(f"Loaded {len(data)} existing records.")
             return data
 
-        log("Existing JSON not a list. Starting empty.")
+        print("Existing JSON is not a list.")
+        print("Starting with an empty dataset.")
         return []
 
     except json.JSONDecodeError as error:
-        log_important(f"WARNING: JSON corrupted: {error}")
+
+        print()
+        print("WARNING: Existing JSON file is corrupted.")
+        print(f"JSON error: {error}")
+
         backup_file = (
             OUTPUT_FILE
             + ".backup_"
             + datetime.now().strftime("%Y%m%d_%H%M%S")
         )
+
         try:
             os.rename(OUTPUT_FILE, backup_file)
-            log_important(f"Backed up to: {backup_file}")
-        except Exception as e:
-            log_important(f"Backup failed: {e}")
+            print(f"Corrupted file backed up to:")
+            print(backup_file)
+        except Exception as backup_error:
+            print(f"Could not create backup: {backup_error}")
+
+        print("Starting with an empty dataset.")
         return []
 
     except Exception as error:
-        log(f"Load failed: {error}")
+        print(f"Could not load existing data: {error}")
         return []
 
 
@@ -424,49 +419,129 @@ def save_data(data):
     temp_file = OUTPUT_FILE + ".tmp"
 
     try:
+
         with open(temp_file, "w", encoding="utf-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=2)
+
         os.replace(temp_file, OUTPUT_FILE)
         return True
 
     except Exception as error:
-        log(f"Save error: {error}")
+
+        print(f"ERROR while saving data: {error}")
+
         if os.path.exists(temp_file):
             try:
                 os.remove(temp_file)
             except Exception:
                 pass
+
         return False
 
 
 # ============================================================
-# YEAR COUNTER (INCREMENTAL — no re-loop)
+# PRINT YEAR COUNTER
 # ============================================================
 
-def build_year_counter(all_news):
-    """Build the counter once from existing data."""
-    counter = Counter()
+def print_year_counter(all_news):
+    """Print how many accidents per year."""
+
+    print()
+    print("==============================================")
+    print("ACCIDENTS PER YEAR")
+    print("==============================================")
+
+    year_counts = Counter()
+
     for item in all_news:
-        if isinstance(item, dict):
-            year = get_year(item)
-            if year is not None:
-                counter[year] += 1
-    return counter
 
+        if not isinstance(item, dict):
+            continue
 
-def print_year_counter(year_counts, total):
-    log_important("==============================================")
-    log_important("ACCIDENTS PER YEAR")
-    log_important("==============================================")
+        year = get_year(item)
 
+        if year is not None:
+            year_counts[year] += 1
+
+    # Show every year from START_YEAR to END_YEAR
     for year in range(START_YEAR, END_YEAR + 1):
-        count = year_counts.get(year, 0)
-        bar = "█" * min(count, 50)
-        log_important(f"  {year} : {count:5d}  {bar}")
 
-    log_important("==============================================")
-    log_important(f"  TOTAL : {total}")
-    log_important("==============================================")
+        count = year_counts.get(year, 0)
+
+        bar = "█" * min(count, 50)
+
+        print(f"  {year} : {count:5d}  {bar}")
+
+    print("==============================================")
+    print(f"  TOTAL : {len(all_news)}")
+    print("==============================================")
+
+
+# ============================================================
+# PRINT API STRUCTURE
+# ============================================================
+
+def print_api_info(data, news_list, page):
+
+    if page != 1:
+        return
+
+    print()
+    print("================================")
+    print("API RESPONSE INFORMATION")
+    print("================================")
+
+    print(f"Response type: {type(data).__name__}")
+    print(f"News records in page: {len(news_list)}")
+
+    if news_list:
+
+        first_item = news_list[0]
+
+        if isinstance(first_item, dict):
+
+            print("Available fields:")
+            print(list(first_item.keys()))
+
+            print()
+            print("First record:")
+
+            print(json.dumps(first_item, ensure_ascii=False, indent=2)[:2000])
+
+    print("================================")
+
+
+# ============================================================
+# DEBUG: PRINT DATES OF ACCIDENT NEWS
+# ============================================================
+
+def debug_print_accident_dates(news_list, page):
+
+    print()
+    print(f"--- DEBUG: ACCIDENT NEWS DATES (page {page}) ---")
+
+    count = 0
+
+    for item in news_list:
+
+        if not isinstance(item, dict):
+            continue
+
+        if is_road_accident(item):
+
+            count += 1
+
+            title = item.get("sinhala_title", "")[:60]
+            date_value = get_date_value(item)
+            year = get_year(item)
+
+            print(f"  [{count}] Date: '{date_value}' | Year: {year}")
+            print(f"       Title: {title}...")
+
+    if count == 0:
+        print("  (No accident news on this page)")
+
+    print("--------------------------------------------------")
 
 
 # ============================================================
@@ -475,176 +550,183 @@ def print_year_counter(year_counts, total):
 
 def main():
 
-    log_important("==============================================")
-    log_important("HIRU NEWS - ROAD ACCIDENT SCRAPER (FAST MODE)")
-    log_important("==============================================")
-    log_important(f"Target years : {START_YEAR} - {END_YEAR}")
-    log_important(f"Category     : {CATEGORY}")
-    log_important(f"Output       : {OUTPUT_FILE}")
-    log_important(f"Batch size   : {BATCH_SIZE} pages")
-    log_important(f"Workers      : {MAX_WORKERS} threads")
-    log_important("==============================================")
+    print()
+    print("==============================================")
+    print("HIRU NEWS - ROAD ACCIDENT SCRAPER (SINHALA)")
+    print("==============================================")
+    print(f"Target years : {START_YEAR} - {END_YEAR}")
+    print(f"Category     : {CATEGORY}")
+    print(f"Output       : {OUTPUT_FILE}")
+    print(f"Filter       : Sinhala road accident keywords")
+    print("==============================================")
 
-    # ---- SETUP ----
-    if not setup_directories_and_files():
-        log_important("Setup failed. Exiting.")
+    print()
+    print("--- SETUP ---")
+
+    setup_ok = setup_directories_and_files()
+
+    if not setup_ok:
+        print()
+        print("Setup failed. Cannot continue.")
         return
 
-    # ---- LOAD EXISTING ----
+    print()
+    print("--- LOADING EXISTING DATA ---")
+
     all_news = load_existing_data()
+
     existing_ids = set()
 
     for item in all_news:
         if isinstance(item, dict):
             existing_ids.add(get_news_id(item))
 
-    log_important(f"Existing records: {len(all_news)}")
+    print()
+    print(f"Existing records: {len(all_news)}")
 
-    # ---- BUILD YEAR COUNTER ONCE ----
-    year_counts = build_year_counter(all_news)
-
+    # Show existing counter
     if all_news:
-        print_year_counter(year_counts, len(all_news))
+        print_year_counter(all_news)
 
-    # ---- RESUME ----
+    # --------------------------------------------------------
+    # Resume from last page
+    # --------------------------------------------------------
+
     last_page = load_progress()
 
     if last_page is not None:
+        print()
+        print(f"Found progress file. Last page was: {last_page}")
         page = last_page + 1
-        log_important(f"Resuming from page: {page}")
+        print(f"Resuming from page: {page}")
     else:
         page = START_PAGE + 1
-        log_important(f"Starting from page: {page}")
+        print()
+        print(f"Starting from page: {page}")
 
-    log_important("--- STARTING SCRAPER ---")
+    print()
+    print("--- STARTING SCRAPER ---")
 
     total_added = 0
     total_accidents_found = 0
-    total_dup = 0
-    total_not_acc = 0
-    total_out_of_range = 0
+    consecutive_no_new = 0
 
-    stop = False
+    while True:
 
-    while not stop:
+        data = fetch_page(page)
 
-        batch_results = fetch_batch(page, BATCH_SIZE, MAX_WORKERS)
-
-        # If every fetch failed → stop
-        if all(v is None for v in batch_results.values()):
-            log_important("All fetches failed in this batch. Stopping.")
+        if data is None:
+            print()
+            print("Could not fetch page.")
+            print("Stopping scraper safely.")
+            print(f"Progress saved at page: {page - 1}")
             break
 
-        for p in sorted(batch_results.keys()):
+        news_list = extract_news(data)
 
-            data = batch_results[p]
+        print_api_info(data, news_list, page)
 
-            if data is None:
-                log(f"Page {p}: fetch failed, skipping.")
+        # DEBUG: Show dates of accident news
+        debug_print_accident_dates(news_list, page)
+
+        # API returns empty → no more news
+        if not news_list:
+            print()
+            print(f"No news found on page {page}.")
+            print("API has no more news. Scraping completed.")
+            clear_progress()
+            break
+
+        page_added = 0
+        page_skipped = 0
+        page_out_of_range = 0
+        page_not_accident = 0
+
+        for item in news_list:
+
+            if not isinstance(item, dict):
                 continue
 
-            news_list = extract_news(data)
+            # ROAD ACCIDENT FILTER
+            if not is_road_accident(item):
+                page_not_accident += 1
+                continue
 
-            # Empty page → API exhausted
-            if not news_list:
-                log_important(f"Empty page {p}. Reached end of API.")
-                stop = True
-                break
+            total_accidents_found += 1
 
-            page_added = 0
-            page_skipped = 0
-            page_out = 0
-            page_not = 0
+            # YEAR FILTER
+            if not is_valid_year(item):
+                page_out_of_range += 1
+                continue
 
-            for item in news_list:
+            news_id = get_news_id(item)
 
-                if not isinstance(item, dict):
-                    continue
+            # DUPLICATE CHECK
+            if news_id in existing_ids:
+                page_skipped += 1
+                continue
 
-                # Accident filter
-                if not is_road_accident(item):
-                    page_not += 1
-                    continue
+            # ADD RECORD
+            all_news.append(item)
+            existing_ids.add(news_id)
+            page_added += 1
+            total_added += 1
 
-                total_accidents_found += 1
+        saved = save_data(all_news)
 
-                # Year filter
-                if not is_valid_year(item):
-                    page_out += 1
-                    continue
+        # Save progress
+        save_progress(page)
 
-                news_id = get_news_id(item)
+        print()
+        print("----------------------------------------------")
+        print(f"Page               : {page}")
+        print(f"Received           : {len(news_list)}")
+        print(f"Not accident       : {page_not_accident}")
+        print(f"Added              : {page_added}")
+        print(f"Duplicates         : {page_skipped}")
+        print(f"Outside year range : {page_out_of_range}")
+        print(f"Total records      : {len(all_news)}")
+        print(f"Saved              : {'YES' if saved else 'NO'}")
+        print("----------------------------------------------")
 
-                if news_id in existing_ids:
-                    page_skipped += 1
-                    continue
+        # Show counter every 10 pages
+        if page % 10 == 0 and all_news:
+            print_year_counter(all_news)
 
-                # Add
-                all_news.append(item)
-                existing_ids.add(news_id)
-                page_added += 1
-                total_added += 1
+        if page_added == 0 and page_skipped == len(news_list):
+            consecutive_no_new += 1
+        else:
+            consecutive_no_new = 0
 
-                # Incremental year counter
-                year = get_year(item)
-                if year is not None:
-                    year_counts[year] += 1
+        if consecutive_no_new >= 10:
+            print()
+            print("API is returning the same page repeatedly.")
+            print("Stopping to avoid an infinite loop.")
+            break
 
-            total_dup += page_skipped
-            total_not_acc += page_not
-            total_out_of_range += page_out
+        page += 1
+        time.sleep(REQUEST_DELAY)
 
-            # Progress line
-            update_progress(
-                p, len(all_news),
-                page_added, page_skipped, page_not
-            )
+    print()
+    print()
+    print("==============================================")
+    print("SCRAPING COMPLETE")
+    print("==============================================")
+    print(f"Total accidents found : {total_accidents_found}")
+    print(f"New records added     : {total_added}")
+    print(f"Total records         : {len(all_news)}")
+    print(f"Output file           : {OUTPUT_FILE}")
+    print(f"Progress file         : {PROGRESS_FILE}")
+    print("==============================================")
 
-            # Save periodically
-            if p % SAVE_EVERY_N_PAGES == 0:
-                saved = save_data(all_news)
-                save_progress(p)
-                log(f"Saved at page {p} (ok={saved})")
-
-            # Counter print periodically
-            if p % COUNTER_EVERY_N_PAGES == 0:
-                print_year_counter(year_counts, len(all_news))
-
-        # Next batch
-        page += BATCH_SIZE
-
-        if REQUEST_DELAY > 0:
-            time.sleep(REQUEST_DELAY)
-
-    # ---- FINAL SAVE ----
-    sys.stdout.write("\n")
-    log_important("Saving final dataset...")
-    save_data(all_news)
-    clear_progress()
-
-    log_important("")
-    log_important("==============================================")
-    log_important("SCRAPING COMPLETE")
-    log_important("==============================================")
-    log_important(f"Total accidents found : {total_accidents_found}")
-    log_important(f"New records added     : {total_added}")
-    log_important(f"Duplicates            : {total_dup}")
-    log_important(f"Not accidents         : {total_not_acc}")
-    log_important(f"Out of year range     : {total_out_of_range}")
-    log_important(f"Total records         : {len(all_news)}")
-    log_important(f"Output file           : {OUTPUT_FILE}")
-    log_important("==============================================")
-
+    # Final counter
     if all_news:
-        print_year_counter(year_counts, len(all_news))
+        print_year_counter(all_news)
 
 
 # ============================================================
-# ENTRY POINT
+# PROGRAM ENTRY POINT
 # ============================================================
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.stdout.write("\n\nInterrupted by user. Data saved up to last checkpoint.\n")
+    main()
