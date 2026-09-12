@@ -374,6 +374,257 @@ CITY_DATA = {
     'මතුගම': ('Kalutara', 6.5222, 80.1167),
     'Ingiriya': ('Kalutara', 6.7500, 80.1667),
     'ඉංගිරිය': ('Kalutara', 6.7500, 80.1667),
+    # ==== CSV data එකේ හමුවුණු missing cities ====
+
+    # Colombo District
+    'Athurugiriya': ('Colombo', 6.8756, 79.9989),
+    'Malabe': ('Colombo', 6.9061, 79.9578),
+    'Pannipitiya': ('Colombo', 6.8467, 79.9386),
+    'Borella': ('Colombo', 6.9147, 79.8776),
+    'Maradana': ('Colombo', 6.9297, 79.8650),
+    'Wellawatte': ('Colombo', 6.8746, 79.8594),
+    'Bambalapitiya': ('Colombo', 6.8905, 79.8565),
+    'Mount Lavinia': ('Colombo', 6.8389, 79.8636),
+    'Ratmalana': ('Colombo', 6.8199, 79.8865),
+    'Nawala': ('Colombo', 6.8926, 79.8874),
+
+    # Gampaha District
+    'Biyagama': ('Gampaha', 6.9500, 79.9833),
+    'Delgoda': ('Gampaha', 6.9833, 80.0000),
+    'Kirindiwela': ('Gampaha', 7.0333, 80.1167),
+    'Ganemulla': ('Gampaha', 7.0667, 79.9667),
+    'Weliweriya': ('Gampaha', 7.0333, 80.0333),
+    'Dekatana': ('Gampaha', 7.0333, 80.0500),
+    'Kaduwela': ('Colombo', 6.9333, 79.9833),
+
+    # Kalutara District
+    'Wadduwa': ('Kalutara', 6.6667, 79.9333),
+    'Waskaduwa': ('Kalutara', 6.6333, 79.9333),
+    'Katukurunda': ('Kalutara', 6.6167, 79.9500),
+    'Dodangoda': ('Kalutara', 6.5500, 80.0167),
+    'Millaniya': ('Kalutara', 6.5833, 80.0333),
+    'Bulathsinhala': ('Kalutara', 6.6500, 80.1500),
+    'Agalawatta': ('Kalutara', 6.6167, 80.2167),
+
+    # Kandy District
+    'Theldeniya': ('Kandy', 7.2833, 80.8000),
+    'Teldeniya': ('Kandy', 7.2833, 80.8000),
+    'Pallekele': ('Kandy', 7.2833, 80.7000),
+    'Hanguranketha': ('Kandy', 7.1833, 80.7833),
+    'Rikillagaskada': ('Kandy', 7.2000, 80.7833),
+    'Wattegama': ('Kandy', 7.3500, 80.6833),
+    'Hasalaka': ('Kandy', 7.3667, 80.8333),
+
+    # Nuwara Eliya District
+    'Bogawantalawa': ('Nuwara Eliya', 6.8167, 80.6500),
+    'Dayagama': ('Nuwara Eliya', 6.8500, 80.6667),
+    'Dickoya': ('Nuwara Eliya', 6.8667, 80.6167),
+    'Norton Bridge': ('Nuwara Eliya', 6.9333, 80.5167),
+    'Pundaluoya': ('Nuwara Eliya', 7.0167, 80.6500),
+    'Ramboda': ('Nuwara Eliya', 7.0500, 80.6833),
+    'Walapane': ('Nuwara Eliya', 7.0833, 80.8500),
+    'Kandapola': ('Nuwara Eliya', 6.9833, 80.8000),
+    'Agarapatana': ('Nuwara Eliya', 6.8333, 80.7333),
+
+    # Galle District
+    'Karapitiya': ('Galle', 6.0667, 80.2167),
+    'Unawatuna': ('Galle', 6.0167, 80.2500),
+    'Ahangama': ('Galle', 5.9667, 80.3667),
+    'Ahungalla': ('Galle', 6.3167, 80.0333),
+    'Batapola': ('Galle', 6.2333, 80.1167),
+    'Habaraduwa': ('Galle', 5.9833, 80.3000),
+    'Koggala': ('Galle', 5.9833, 80.3167),
+    'Baddegama': ('Galle', 6.1667, 80.1833),
+
+    # Matara District
+    'Akuressa': ('Matara', 6.1000, 80.4833),
+    'Deniyaya': ('Matara', 6.3333, 80.5500),
+    'Hakmana': ('Matara', 6.0667, 80.6333),
+    'Kamburupitiya': ('Matara', 6.0833, 80.5667),
+    'Devinuwara': ('Matara', 5.9333, 80.5833),
+    'Gandara': ('Matara', 5.9500, 80.6167),
+    'Kotapola': ('Matara', 6.3000, 80.5667),
+    'Pasgoda': ('Matara', 6.2500, 80.6333),
+    'Pitabeddara': ('Matara', 6.2000, 80.4667),
+
+    # Hambantota District
+    'Ambalantota': ('Hambantota', 6.1167, 81.0167),
+    'Angunakolapelessa': ('Hambantota', 6.1500, 80.9500),
+    'Lunugamvehera': ('Hambantota', 6.3667, 81.1833),
+    'Sooriyawewa': ('Hambantota', 6.3167, 81.0500),
+    'Suriyawewa': ('Hambantota', 6.3167, 81.0500),
+    'Walasmulla': ('Hambantota', 6.1500, 80.7000),
+    'Middeniya': ('Hambantota', 6.2333, 80.7333),
+    'Katuwana': ('Hambantota', 6.2000, 80.6833),
+    'Netolpitiya': ('Hambantota', 6.0333, 80.7833),
+    'Ranna': ('Hambantota', 6.0667, 80.8500),
+    'Hungama': ('Hambantota', 6.1167, 80.8333),
+
+    # Jaffna District
+    'Kopay': ('Jaffna', 9.7167, 80.0500),
+    'Kodikamam': ('Jaffna', 9.6833, 80.1000),
+    'Manipay': ('Jaffna', 9.7333, 79.9833),
+    'Nelliady': ('Jaffna', 9.8000, 80.0833),
+    'Vaddukoddai': ('Jaffna', 9.7333, 79.9500),
+    'Tellippalai': ('Jaffna', 9.7833, 80.0333),
+    'Uduvil': ('Jaffna', 9.7333, 80.0000),
+    'Sandilipay': ('Jaffna', 9.7333, 79.9833),
+
+    # Kilinochchi District
+    'Pallai': ('Kilinochchi', 9.5833, 80.4667),
+    'Poonakary': ('Kilinochchi', 9.4667, 80.1667),
+    'Dharmapuram': ('Kilinochchi', 9.4833, 80.4167),
+    'Iranamadu': ('Kilinochchi', 9.3167, 80.4333),
+    'Mulankavil': ('Kilinochchi', 9.4833, 80.2000),
+
+    # Mullaitivu District
+    'Thunukkai': ('Mullaitivu', 9.1500, 80.4333),
+    'Maritimepattu': ('Mullaitivu', 9.2333, 80.7667),
+    'Welioya': ('Mullaitivu', 8.9667, 80.7667),
+
+    # Vavuniya District
+    'Omanthai': ('Vavuniya', 8.8333, 80.5000),
+    'Kanagarayankulam': ('Vavuniya', 8.9667, 80.4167),
+    'Mamaduwa': ('Vavuniya', 8.8000, 80.4167),
+    'Vavunikulam': ('Vavuniya', 8.9167, 80.4667),
+
+    # Trincomalee District
+    'Thampalakamam': ('Trincomalee', 8.4667, 81.0833),
+    'Kuchchaveli': ('Trincomalee', 8.8167, 81.1000),
+    'Gomarankadawala': ('Trincomalee', 8.6500, 80.9167),
+    'Padaviya': ('Trincomalee', 8.8333, 80.9000),
+    'Thoppur': ('Trincomalee', 8.5500, 81.1500),
+    'Eachchilampattu': ('Trincomalee', 8.3167, 81.3833),
+    'Verugal': ('Trincomalee', 8.2500, 81.4167),
+
+    # Batticaloa District
+    'Arayampathy': ('Batticaloa', 7.7500, 81.7500),
+    'Kiran': ('Batticaloa', 7.8667, 81.5333),
+    'Vellavely': ('Batticaloa', 7.6833, 81.6000),
+    'Paddiruppu': ('Batticaloa', 7.6500, 81.6667),
+    'Kaluwanchikudy': ('Batticaloa', 7.5833, 81.7500),
+    'Kalkudah': ('Batticaloa', 7.9167, 81.5000),
+
+    # Ampara District
+    'Dehiattakandiya': ('Ampara', 7.6167, 81.0333),
+    'Damana': ('Ampara', 7.4500, 81.2167),
+    'Uhana': ('Ampara', 7.3333, 81.6333),
+    'Padiyatalawa': ('Ampara', 7.4000, 81.2833),
+    'Lahugala': ('Ampara', 6.8833, 81.7167),
+    'Nintavur': ('Ampara', 7.4167, 81.8000),
+    'Ninthavur': ('Ampara', 7.4167, 81.8000),
+    'Addalaichenai': ('Ampara', 7.2667, 81.8500),
+    'Irakkamam': ('Ampara', 7.3167, 81.7667),
+    'Karativu': ('Ampara', 7.3833, 81.8167),
+    'Sammanthurai': ('Ampara', 7.3667, 81.8000),
+    'Alayadivembu': ('Ampara', 7.0833, 81.8500),
+    'Navithanveli': ('Ampara', 7.3500, 81.7833),
+
+    # Kurunegala District
+    'Bingiriya': ('Kurunegala', 7.6000, 79.9167),
+    'Ibbagamuwa': ('Kurunegala', 7.5167, 80.4167),
+    'Kobeigane': ('Kurunegala', 7.6667, 80.0333),
+    'Katupotha': ('Kurunegala', 7.5000, 80.2500),
+    'Weerambugedara': ('Kurunegala', 7.4667, 80.3500),
+    'Polpitigama': ('Kurunegala', 7.6500, 80.4500),
+    'Rideegama': ('Kurunegala', 7.5333, 80.5000),
+    'Mawathagama': ('Kurunegala', 7.4167, 80.4333),
+    'Mallawapitiya': ('Kurunegala', 7.4667, 80.3667),
+    'Nikaweratiya': ('Kurunegala', 7.7500, 80.1167),
+    'Panduwasnuwara': ('Kurunegala', 7.5833, 80.0500),
+    'Rasnayakapura': ('Kurunegala', 7.7167, 80.0500),
+    'Bamunakotuwa': ('Kurunegala', 7.6000, 80.1500),
+    'Ganewatta': ('Kurunegala', 7.6333, 80.3167),
+    'Kotawehera': ('Kurunegala', 7.8500, 80.1500),
+    'Ehetuwewa': ('Kurunegala', 7.8667, 80.2000),
+    'Galgamuwa': ('Kurunegala', 8.0000, 80.2833),
+    'Ambanpola': ('Kurunegala', 7.9167, 80.3167),
+
+    # Puttalam District
+    'Mundalama': ('Puttalam', 8.1000, 79.8167),
+    'Madampe': ('Puttalam', 7.5000, 79.8333),
+    'Arachchikattuwa': ('Puttalam', 7.6500, 79.8500),
+    'Pallama': ('Puttalam', 7.9167, 79.9500),
+    'Vanathavilluwa': ('Puttalam', 8.4167, 79.8333),
+    'Karuwalagaswewa': ('Puttalam', 8.1667, 80.0500),
+    'Nawagattegama': ('Puttalam', 7.8500, 80.0000),
+    'Mahakumbukkadawala': ('Puttalam', 7.7833, 79.9500),
+    'Norochcholai': ('Puttalam', 8.1167, 79.7333),
+    'Palaviya': ('Puttalam', 8.1667, 79.7500),
+    'Kandakuliya': ('Puttalam', 8.2500, 79.7500),
+    'Ettale': ('Puttalam', 8.2000, 79.7667),
+
+    # Anuradhapura District
+    'Galenbindunuwewa': ('Anuradhapura', 8.3333, 80.6667),
+    'Eppawala': ('Anuradhapura', 8.1500, 80.4167),
+    'Rajanganaya': ('Anuradhapura', 8.2000, 80.1833),
+    'Nochchiyagama': ('Anuradhapura', 8.3167, 80.2000),
+    'Palagala': ('Anuradhapura', 8.2500, 80.5833),
+    'Kahatagasdigiliya': ('Anuradhapura', 8.5167, 80.8000),
+    'Horowpothana': ('Anuradhapura', 8.6000, 80.8333),
+    'Rambewa': ('Anuradhapura', 8.5667, 80.4667),
+    'Mahavilachchiya': ('Anuradhapura', 8.5167, 80.2333),
+    'Thirappane': ('Anuradhapura', 8.2333, 80.5667),
+    'Ipalogama': ('Anuradhapura', 8.2000, 80.4500),
+    'Nachchaduwa': ('Anuradhapura', 8.2333, 80.4667),
+
+    # Polonnaruwa District
+    'Thamankaduwa': ('Polonnaruwa', 7.9333, 81.0000),
+    'Welikanda': ('Polonnaruwa', 7.9333, 81.2333),
+    'Dimbulagala': ('Polonnaruwa', 7.9167, 81.0000),
+    'Aralaganwila': ('Polonnaruwa', 8.1333, 81.1000),
+    'Elahera': ('Polonnaruwa', 8.0333, 80.8000),
+    'Lankapura': ('Polonnaruwa', 8.0500, 81.0500),
+    'Kaduruwela': ('Polonnaruwa', 7.9333, 81.0167),
+
+    # Badulla District
+    'Meegahakiwula': ('Badulla', 7.2000, 81.1500),
+    'Kandeketiya': ('Badulla', 7.2500, 80.9833),
+    'Rideemaliyadda': ('Badulla', 7.2833, 81.1333),
+    'Soranatota': ('Badulla', 7.1500, 81.0333),
+    'Uva Paranagama': ('Badulla', 6.9833, 81.0000),
+    'Lunugala': ('Badulla', 7.0500, 81.2000),
+    'Badalkumbura': ('Badulla', 6.9000, 81.2333),
+    'Haldummulla': ('Badulla', 6.7667, 80.8833),
+    'Koslanda': ('Badulla', 6.8000, 80.9167),
+    'Beragala': ('Badulla', 6.7833, 80.9167),
+
+    # Monaragala District
+    'Thanamalwila': ('Monaragala', 6.4333, 81.0333),
+    'Kuda Oya': ('Monaragala', 6.6667, 81.2000),
+    'Okkampitiya': ('Monaragala', 6.6167, 81.3167),
+    'Sewanagala': ('Monaragala', 6.4833, 81.1667),
+    'Nakkala': ('Monaragala', 6.9000, 81.4333),
+    'Dombagahawela': ('Monaragala', 6.8500, 81.4000),
+    'Medagama': ('Monaragala', 6.9500, 81.2333),
+    'Madulla': ('Monaragala', 7.0333, 81.3500),
+
+    # Ratnapura District
+    'Embilipitiya': ('Ratnapura', 6.3378, 80.8500),
+    'Kahawatta': ('Ratnapura', 6.5167, 80.5000),
+    'Pelmadulla': ('Ratnapura', 6.6167, 80.5333),
+    'Nivithigala': ('Ratnapura', 6.5833, 80.4667),
+    'Kalawana': ('Ratnapura', 6.5333, 80.4000),
+    'Rakwana': ('Ratnapura', 6.4667, 80.6167),
+    'Godakawela': ('Ratnapura', 6.4833, 80.5667),
+    'Weligepola': ('Ratnapura', 6.5667, 80.6167),
+    'Opanayaka': ('Ratnapura', 6.6333, 80.6500),
+    'Ayagama': ('Ratnapura', 6.6500, 80.3167),
+    'Kiriella': ('Ratnapura', 6.7500, 80.3667),
+    'Elapatha': ('Ratnapura', 6.6500, 80.4167),
+    'Imbulpe': ('Ratnapura', 6.6833, 80.7500),
+    'Kolonna': ('Ratnapura', 6.4000, 80.6500),
+    'Udawalawe': ('Ratnapura', 6.4667, 80.8833),
+
+    # Kegalle District
+    'Kitulgala': ('Kegalle', 6.9917, 80.4167),
+    'Ruwanwella': ('Kegalle', 7.0500, 80.2500),
+    'Yatiyanthota': ('Kegalle', 7.0333, 80.3000),
+    'Dehiovita': ('Kegalle', 6.9333, 80.2000),
+    'Deraniyagala': ('Kegalle', 6.9333, 80.3500),
+    'Aranayaka': ('Kegalle', 7.1500, 80.4833),
+    'Bulathkohupitiya': ('Kegalle', 7.1000, 80.4000),
+    'Hemmathagama': ('Kegalle', 7.2000, 80.5167),
 }
 
 
@@ -534,6 +785,7 @@ def main():
             fieldnames.append(col)
 
     # Location data එකතු කරන්න
+    kept_rows = []
     sl_count = 0
     foreign_count = 0
     no_location = 0
@@ -543,13 +795,9 @@ def main():
         story = str(row.get('story', ''))
         combined = title + ' ' + story
 
-        # 1. විදේශීයද බලන්න
+        # 1. විදේශීයද බලන්න - විදේශීය නම් skip කරන්න
         if is_foreign(combined):
             foreign_count += 1
-            row['district'] = 'Nun'
-            row['city'] = 'Nun'
-            row['latitude'] = 'Nun'
-            row['longitude'] = 'Nun'
             continue
 
         # 2. ශ්‍රී ලංකා නගරයක් හඳුනාගන්න
@@ -569,23 +817,27 @@ def main():
             row['latitude'] = ''
             row['longitude'] = ''
 
+        kept_rows.append(row)
+
     # Output folder එක හදන්න
     os.makedirs(os.path.dirname(OUTPUT_CSV), exist_ok=True)
 
-    # අලුත් CSV එක ලියන්න
+    # අලුත් CSV එක ලියන්න (foreign rows skip කර ඇත)
     with open(OUTPUT_CSV, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(kept_rows)
 
     # Summary
     print()
     print("=" * 60)
     print("✅ DONE!")
     print("=" * 60)
+    print(f"Total records loaded   : {len(rows)}")
     print(f"Sri Lanka (city found) : {sl_count}")
-    print(f"Foreign (Nun)          : {foreign_count}")
     print(f"Sri Lanka (no city)    : {no_location}")
+    print(f"Foreign (skipped)      : {foreign_count}")
+    print(f"Records written        : {len(kept_rows)}")
     print(f"Output file            : {OUTPUT_CSV}")
     print("=" * 60)
 

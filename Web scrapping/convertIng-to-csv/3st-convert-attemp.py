@@ -6,7 +6,7 @@ import os
 # ============================================================
 
 INPUT_CSV = "../data/raw/extracted/2nd-converted.csv"
-OUTPUT_CSV = "../data/raw/extracted/3rd-final.csv"
+OUTPUT_CSV = "../data/raw/extracted/3rd-converted.csv"
 
 # ML model එකට ඕන columns
 FINAL_COLUMNS = [
