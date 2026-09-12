@@ -10,7 +10,7 @@ from datetime import datetime, date
 # CONFIGURATION
 # ============================================================
 
-INPUT_CSV  = "../data/raw/extracted/3rd-converted.csv"
+INPUT_CSV  = "../data/raw/extracted/4th-with-weather.csv"
 OUTPUT_CSV = "../data/raw/extracted/4th-with-weather.csv"
 
 # Open-Meteo Archive API - Daily weather variables
@@ -27,10 +27,12 @@ DAILY_VARS = [
     "relative_humidity_2m_mean",
 ]
 
+# 🆕 deaths_count එකතු කළා (latitude/longitude ට පස්සේ)
 FINAL_COLUMNS = [
     'id', 'date', 'time', 'year', 'month', 'day',
     'hour', 'day_of_week', 'district', 'city',
     'latitude', 'longitude',
+    'deaths_count',          # 🆕 ← මේක එකතු කළා
     # --- weather columns ---
     'weather_code',
     'temp_max', 'temp_min', 'temp_mean',
@@ -59,7 +61,6 @@ TODAY = date.today()
 # ============================================================
 
 def is_valid_number(value):
-    """'Nun', 'NaN', '', 'null' වගේ ඒවා detect කරලා float return කරනවා."""
     if value is None:
         return None
     s = str(value).strip().lower()
@@ -72,7 +73,6 @@ def is_valid_number(value):
 
 
 def is_valid_date(date_str):
-    """Date එක YYYY-MM-DD වගේ format එකට හරිද බලනවා."""
     if not date_str:
         return None
     s = str(date_str).strip()
@@ -87,7 +87,6 @@ def is_valid_date(date_str):
 
 
 def is_valid_coord(lat, lon):
-    """Latitude / longitude හරිද (Sri Lanka ඇතුළේද) බලනවා."""
     if lat is None or lon is None:
         return False
     if not (SL_LAT_MIN <= lat <= SL_LAT_MAX):
@@ -97,12 +96,26 @@ def is_valid_coord(lat, lon):
     return True
 
 
+def has_weather(row):
+    """
+    Row එකේ දැනටමත් weather data තියෙනවද බලනවා.
+    හැම weather key එකක්ම තියෙනවා නම් විතරයි True.
+    """
+    for k in WEATHER_KEYS:
+        val = row.get(k)
+        if val is None:
+            return False
+        s = str(val).strip().lower()
+        if s in ('', 'nan', 'nun', 'null', 'none'):
+            return False
+    return True
+
+
 # ============================================================
 # WEATHER FETCH
 # ============================================================
 
 def fetch_weather(lat, lon, date_str):
-    """Open-Meteo Archive API එකෙන් දීපු date එකට weather ගන්නවා."""
     params = {
         "latitude":   lat,
         "longitude":  lon,
@@ -138,14 +151,10 @@ def fetch_weather(lat, lon, date_str):
 
 
 # ============================================================
-# CLEANING STEP (Null Removal)
+# CLEANING STEP
 # ============================================================
 
 def clean_rows(rows):
-    """
-    Null / invalid rows මුලින්ම අයින් කරනවා.
-    Return: (clean_rows, stats)
-    """
     clean = []
     stats = {
         'total':        len(rows),
@@ -159,30 +168,25 @@ def clean_rows(rows):
     for row in rows:
         date_str = (row.get('date') or '').strip()
 
-        # 1. Date valid ද?
         parsed = is_valid_date(date_str)
         if parsed is None:
             stats['removed_date'] += 1
             continue
 
-        # 2. Future date ද?
         if parsed > TODAY:
             stats['removed_future'] += 1
             continue
 
-        # 3. lat/lon valid ද?
         lat = is_valid_number(row.get('latitude'))
         lon = is_valid_number(row.get('longitude'))
         if lat is None or lon is None:
             stats['removed_latlon'] += 1
             continue
 
-        # 4. SL ඇතුළේද?
         if not is_valid_coord(lat, lon):
             stats['removed_coord'] += 1
             continue
 
-        # ✅ Keep කරන්න
         clean.append(row)
         stats['kept'] += 1
 
@@ -197,7 +201,7 @@ def main():
 
     print()
     print("=" * 60)
-    print("STEP 4: Add daily weather data (Accident Dataset)")
+    print("STEP 4: Weather fetch (RESUME MODE)")
     print("=" * 60)
 
     if not os.path.exists(INPUT_CSV):
@@ -211,9 +215,10 @@ def main():
         rows = list(reader)
 
     print(f"✅ Loaded {len(rows)} records.")
+    print(f"📋 Input columns: {list(rows[0].keys()) if rows else 'N/A'}")
     print()
 
-    # ---- 2. CLEAN: null / invalid rows මුලින්ම අයින් කරනවා ----
+    # ---- 2. CLEAN ----
     print("🧹 Cleaning null / invalid rows...")
     clean, stats = clean_rows(rows)
 
@@ -233,20 +238,28 @@ def main():
         print("❌ No valid records left. Exiting.")
         return
 
-    # ---- 3. Weather fetch ----
+    # ---- 3. Weather fetch (SKIP rows with weather) ----
     print()
-    print("🌤  Fetching weather for clean records...")
+    print("🌤  Checking weather data...")
     print()
 
     cache = {}
     fetched = 0
     cache_hits = 0
+    skipped = 0
+    failed = 0
     total = len(clean)
 
     for i, row in enumerate(clean, 1):
 
+        # දැනටමත් weather තියෙනවා නම් → SKIP
+        if has_weather(row):
+            skipped += 1
+            continue
+
         for k in WEATHER_KEYS:
-            row[k] = ''
+            if k not in row or row[k] is None:
+                row[k] = ''
 
         date_str = (row.get('date') or '').strip()
         lat = float(row['latitude'])
@@ -264,6 +277,9 @@ def main():
             fetched += 1
             time.sleep(0.3)
 
+        if all(v is None for v in weather.values()):
+            failed += 1
+
         for k, v in weather.items():
             row[k] = '' if v is None else v
 
@@ -275,14 +291,16 @@ def main():
         writer.writeheader()
         writer.writerows(clean)
 
-    # ---- 5. Final summary ----
+    # ---- 5. Summary ----
     print()
     print("=" * 60)
     print("✅ DONE!")
     print("=" * 60)
     print(f"Clean records        : {len(clean)}")
-    print(f"API calls (unique)   : {fetched}")
-    print(f"Cache hits           : {cache_hits}")
+    print(f"⏭️  Skipped (had data): {skipped}")
+    print(f"🌤  Fetched (new)     : {fetched}")
+    print(f"💾 Cache hits         : {cache_hits}")
+    print(f"⚠️  Failed fetches    : {failed}")
     print(f"Output file          : {OUTPUT_CSV}")
     print("=" * 60)
 
