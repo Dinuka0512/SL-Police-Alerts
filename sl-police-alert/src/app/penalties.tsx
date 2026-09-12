@@ -118,16 +118,18 @@ export default function PenaltiesScreen() {
         </View>
       </ScrollView>
 
-      <View className="bg-white border-t border-slate-200 px-4 py-3">
-        <Pressable
-          onPress={() => setShowForm(true)}
-          className="bg-police-primary rounded-xl py-4 items-center flex-row justify-center gap-2 shadow-sm"
-          accessibilityRole="button"
-        >
-          <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-          <Text className="text-white font-bold text-base">Add Penalty</Text>
-        </Pressable>
-      </View>
+      {!showForm && (
+        <View className="bg-white border-t border-slate-200 px-4 py-3">
+          <Pressable
+            onPress={() => setShowForm(true)}
+            className="bg-police-primary rounded-xl py-4 items-center flex-row justify-center gap-2 shadow-sm"
+            accessibilityRole="button"
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+            <Text className="text-white font-bold text-base">Add Penalty</Text>
+          </Pressable>
+        </View>
+      )}
 
       <TabBar active="penalties" />
 
@@ -142,7 +144,7 @@ export default function PenaltiesScreen() {
             accessibilityRole="button"
             accessibilityLabel="Close penalty form"
           />
-          <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[88%]">
+          <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl h-[90%]">
             <View className="items-center pt-3 pb-1">
               <View className="h-1.5 w-10 rounded-full bg-slate-300" />
             </View>
