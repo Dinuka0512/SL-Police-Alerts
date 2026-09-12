@@ -21,6 +21,13 @@ export default function RootLayout() {
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="dashboard" />
+        <Stack.Screen name="messages" />
+        <Stack.Screen name="contacts" />
+        <Stack.Screen name="penalties" />
+        <Stack.Screen name="account" />
       </Stack>
       {isLoading && <LoadingScreen onFinish={() => setIsLoading(false)} />}
     </>
