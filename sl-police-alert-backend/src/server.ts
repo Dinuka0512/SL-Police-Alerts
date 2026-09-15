@@ -7,6 +7,8 @@ import dotenv from "dotenv";
 import { AppDataSource } from "./config/data-source";
 import userRoutes from "./routes/userRoute";
 import departmentRoutes from "./routes/departmentRoute";
+import messageRoutes from "./routes/messageRoute";
+import emergancyContactRoutes from "./routes/emergancyContactRoute";
 
 dotenv.config();
 
@@ -25,6 +27,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/users", userRoutes);
 app.use("/api/department", departmentRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/emergancyContacts", emergancyContactRoutes);
 
 const PORT = Number(process.env.PORT) || 5000;
 
