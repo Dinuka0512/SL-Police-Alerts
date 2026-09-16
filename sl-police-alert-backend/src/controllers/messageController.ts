@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 
 import { AppDataSource } from "../config/data-source";
 import { Message } from "../entities/Message";
+import { uploadImageToCloudinary, deleteImageFromCloudinary } from "../utils/uploadImage";
 
 const messageRepository = AppDataSource.getMongoRepository(Message);
 
@@ -32,8 +33,21 @@ export const createMessage = async (
       return;
     }
 
+    let savedImage = (image ?? "") as string;
+    if (savedImage && savedImage.startsWith("data:")) {
+      try {
+        savedImage = await uploadImageToCloudinary(savedImage);
+      } catch {
+        res.status(500).json({
+          success: false,
+          message: "Failed to upload image to Cloudinary",
+        });
+        return;
+      }
+    }
+
     const message = messageRepository.create({
-      image: image ?? "",
+      image: savedImage,
       title,
       content,
       date: date ? new Date(date) : new Date(),
@@ -185,7 +199,19 @@ export const updateMessage = async (
     } = req.body;
 
     if (image !== undefined) {
-      message.image = image;
+      if (image.startsWith("data:")) {
+        try {
+          message.image = await uploadImageToCloudinary(image);
+        } catch {
+          res.status(500).json({
+            success: false,
+            message: "Failed to upload image to Cloudinary",
+          });
+          return;
+        }
+      } else {
+        message.image = image;
+      }
     }
 
     if (title !== undefined) {
@@ -259,6 +285,22 @@ export const deleteMessage = async (
       });
       return;
     }
+
+    const message = await messageRepository.findOne({
+      where: {
+        m_id: new ObjectId(id),
+      },
+    });
+
+    if (!message) {
+      res.status(404).json({
+        success: false,
+        message: "Message not found",
+      });
+      return;
+    }
+
+    await deleteImageFromCloudinary(message.image);
 
     const result = await messageRepository.deleteOne({
       m_id: new ObjectId(id),
