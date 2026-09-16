@@ -74,11 +74,14 @@ export default function EditUserPage() {
     e.preventDefault();
     if (!validate()) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    updateUser(id!, form);
-    showToast("success", "User updated successfully", `${form.fullName}'s account has been updated.`);
-    setSaving(false);
-    navigate("/users");
+    try {
+      await updateUser(id!, form);
+      showToast("success", "User updated successfully", `${form.fullName}'s account has been updated.`);
+      navigate("/users");
+    } catch (err) {
+      showToast("error", "Failed to update user", err instanceof Error ? err.message : "Something went wrong");
+      setSaving(false);
+    }
   }
 
   const Field = ({ label, id: fid, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) => (

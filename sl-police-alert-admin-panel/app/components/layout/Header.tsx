@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation } from "react-router";
 import { Bell, Menu, ChevronRight, Shield } from "lucide-react";
+import { useAuth } from "~/context/AuthContext";
 
 const ROUTE_LABELS: Record<string, { title: string; subtitle: string; crumbs?: string[] }> = {
   "/":              { title: "Dashboard", subtitle: "System overview and statistics", crumbs: ["Dashboard"] },
@@ -19,6 +20,13 @@ interface HeaderProps {
 
 export default function Header({ onMenuToggle, notifCount = 3 }: HeaderProps) {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const initials = user
+    ? user.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "AD";
+  const displayName = user?.fullName ?? "Administrator";
+  const displayRole = user?.role ?? "Super Admin";
 
   const routeKey = Object.keys(ROUTE_LABELS).find(key => {
     if (key === "/") return location.pathname === "/";
@@ -93,11 +101,11 @@ export default function Header({ onMenuToggle, notifCount = 3 }: HeaderProps) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 12, fontWeight: 700, color: "#fff"
           }}>
-            SP
+            {initials}
           </div>
           <div className="hide-mobile">
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b" }}>Sunil Perera</div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>Super Admin</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b" }}>{displayName}</div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>{displayRole}</div>
           </div>
         </div>
       </div>

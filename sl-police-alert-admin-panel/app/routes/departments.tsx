@@ -83,28 +83,41 @@ export default function DepartmentsPage() {
   async function handleAdd() {
     if (!validate()) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    addDepartment(form);
-    showToast("success", "Department added", `${form.name} has been created.`);
-    setSaving(false);
-    setAddOpen(false);
+    try {
+      await addDepartment(form);
+      showToast("success", "Department added", `${form.name} has been created.`);
+      setAddOpen(false);
+    } catch (err) {
+      showToast("error", "Failed to add department", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleEdit() {
     if (!validate() || !editId) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 400));
-    updateDepartment(editId, form);
-    showToast("success", "Department updated", `${form.name} has been updated.`);
-    setSaving(false);
-    setEditId(null);
+    try {
+      await updateDepartment(editId, form);
+      showToast("success", "Department updated", `${form.name} has been updated.`);
+      setEditId(null);
+    } catch (err) {
+      showToast("error", "Failed to update department", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteId) return;
-    deleteDepartment(deleteId);
-    showToast("success", "Department deleted", `${deleteDept?.name} has been removed.`);
-    setDeleteId(null);
+    try {
+      await deleteDepartment(deleteId);
+      showToast("success", "Department deleted", `${deleteDept?.name} has been removed.`);
+    } catch (err) {
+      showToast("error", "Failed to delete department", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setDeleteId(null);
+    }
   }
 
   const DeptFormFields = () => (

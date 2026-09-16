@@ -5,10 +5,12 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import { AppDataSource } from "./config/data-source";
+import { seedDatabase } from "./config/seed";
 import userRoutes from "./routes/userRoute";
 import departmentRoutes from "./routes/departmentRoute";
 import messageRoutes from "./routes/messageRoute";
 import emergancyContactRoutes from "./routes/emergancyContactRoute";
+import authRoutes from "./routes/authRoute";
 
 dotenv.config();
 
@@ -25,6 +27,7 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/department", departmentRoutes);
 app.use("/api/messages", messageRoutes);
@@ -37,6 +40,8 @@ const startServer = async (): Promise<void> => {
     await AppDataSource.initialize();
 
     console.log("MongoDB Connected Successfully");
+
+    await seedDatabase();
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

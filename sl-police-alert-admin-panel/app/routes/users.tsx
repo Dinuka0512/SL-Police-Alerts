@@ -44,11 +44,16 @@ export default function UsersPage() {
   const selectedUser = viewUser ? users.find(u => u.id === viewUser) : null;
   const deleteTargetUser = deleteId ? users.find(u => u.id === deleteId) : null;
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteId) return;
-    deleteUser(deleteId);
-    showToast("success", "User deleted", "The user account has been removed.");
-    setDeleteId(null);
+    try {
+      await deleteUser(deleteId);
+      showToast("success", "User deleted", "The user account has been removed.");
+    } catch (err) {
+      showToast("error", "Failed to delete user", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setDeleteId(null);
+    }
   }
 
   return (

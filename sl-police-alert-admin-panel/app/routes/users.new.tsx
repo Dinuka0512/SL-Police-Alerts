@@ -7,6 +7,7 @@ import type { UserRole, UserStatus } from "~/context/AppContext";
 
 interface FormData {
   fullName: string;
+  policeId: string;
   email: string;
   phone: string;
   password: string;
@@ -18,6 +19,7 @@ interface FormData {
 
 interface FormErrors {
   fullName?: string;
+  policeId?: string;
   email?: string;
   phone?: string;
   password?: string;
@@ -26,7 +28,7 @@ interface FormErrors {
 }
 
 const INITIAL: FormData = {
-  fullName: "", email: "", phone: "", password: "", confirmPassword: "",
+  fullName: "", policeId: "", email: "", phone: "", password: "", confirmPassword: "",
   departmentId: "", role: "Police Officer", status: "Active",
 };
 
@@ -49,6 +51,7 @@ export default function AddUserPage() {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (!form.fullName.trim()) errs.fullName = "Full name is required";
+    if (!form.policeId.trim()) errs.policeId = "Police ID is required";
     if (!form.email.trim()) errs.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Please enter a valid email address";
     if (!form.phone.trim()) errs.phone = "Phone number is required";
@@ -67,18 +70,24 @@ export default function AddUserPage() {
     e.preventDefault();
     if (!validate()) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    addUser({
-      fullName: form.fullName,
-      email: form.email,
-      phone: form.phone,
-      departmentId: form.departmentId,
-      role: form.role,
-      status: form.status,
-    });
-    showToast("success", "User created successfully", `${form.fullName} has been added to the system.`);
-    setSaving(false);
-    navigate("/users");
+    try {
+      await addUser({
+        fullName: form.fullName,
+        policeId: form.policeId,
+        email: form.email,
+        phone: form.phone,
+        departmentId: form.departmentId,
+        role: form.role,
+        status: form.status,
+        password: form.password,
+      });
+      showToast("success", "User created successfully", `${form.fullName} has been added to the system.`);
+      navigate("/users");
+    } catch (err) {
+      showToast("error", "Failed to create user", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const Field = ({ label, id, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) => (
@@ -125,6 +134,17 @@ export default function AddUserPage() {
                     placeholder="e.g. Sunil Perera"
                     value={form.fullName}
                     onChange={e => set("fullName", e.target.value)}
+                  />
+                </Field>
+
+                <Field label="Police ID" id="policeId" error={errors.policeId} required>
+                  <input
+                    id="policeId"
+                    type="text"
+                    className={`form-control ${errors.policeId ? "error" : ""}`}
+                    placeholder="e.g. NP-4521"
+                    value={form.policeId}
+                    onChange={e => set("policeId", e.target.value)}
                   />
                 </Field>
 

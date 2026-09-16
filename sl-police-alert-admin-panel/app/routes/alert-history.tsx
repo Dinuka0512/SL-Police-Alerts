@@ -46,11 +46,16 @@ export default function AlertHistoryPage() {
   const viewAlert = viewId ? getAlertById(viewId) : null;
   const deleteAlert_ = deleteId ? getAlertById(deleteId) : null;
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteId) return;
-    deleteAlert(deleteId);
-    showToast("success", "Alert deleted", "The alert has been removed from history.");
-    setDeleteId(null);
+    try {
+      await deleteAlert(deleteId);
+      showToast("success", "Alert deleted", "The alert has been removed from history.");
+    } catch (err) {
+      showToast("error", "Failed to delete alert", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setDeleteId(null);
+    }
   }
 
   return (

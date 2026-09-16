@@ -9,6 +9,7 @@ export default [
     route("departments", "routes/departments.tsx"),
     route("send-alert", "routes/send-alert.tsx"),
     route("alert-history", "routes/alert-history.tsx"),
-    route("settings", "routes/settings.tsx"),
+route("settings", "routes/settings.tsx"),
   ]),
+  route("login", "routes/login.tsx"),
 ] satisfies RouteConfig;
