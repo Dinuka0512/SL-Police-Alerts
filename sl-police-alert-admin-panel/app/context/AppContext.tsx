@@ -1,53 +1,55 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 
-// ===== TYPES =====
-export type DeptStatus = "Active" | "Inactive";
-export type UserStatus = "Active" | "Inactive";
-export type UserRole = "Admin" | "Police Officer" | "Department Officer";
-export type AlertPriority = "Low" | "Medium" | "High" | "Critical";
-export type AlertStatus = "Sent" | "Delivered" | "Failed";
-export type DeliveryStatus = "Delivered" | "Pending" | "Failed";
+import { departmentService, userService, messageService } from "~/services";
 
-export interface Department {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  status: DeptStatus;
-  createdAt: string;
-  userCount: number;
-}
+import {
+  departmentFromDTO,
+  userFromDTO,
+  alertFromDTO,
+  toCreateDepartmentDTO,
+  toCreateUserDTO,
+  toUpdateUserDTO,
+  toCreateMessageDTO,
+} from "~/dto/mappers";
 
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  departmentId: string;
-  role: UserRole;
-  status: UserStatus;
-  createdAt: string;
-  lastActive: string;
-}
+import type {
+  Department,
+  User,
+  Alert,
+  DeptStatus,
+  UserRole,
+  UserStatus,
+  AlertPriority,
+  AlertStatus,
+  DeliveryStatus,
+  CreateDepartmentInput,
+  UpdateDepartmentInput,
+  CreateUserInput,
+  UpdateUserInput,
+  CreateAlertInput,
+} from "~/types";
 
-export interface AlertDeptDelivery {
-  departmentId: string;
-  status: DeliveryStatus;
-}
+// Re-export types so existing page imports keep working.
+export type {
+  Department,
+  User,
+  Alert,
+  AlertDeptDelivery,
+  DeptStatus,
+  UserStatus,
+  UserRole,
+  AlertPriority,
+  AlertStatus,
+  DeliveryStatus,
+} from "~/types";
 
-export interface Alert {
-  id: string;
-  title: string;
-  description: string;
-  priority: AlertPriority;
-  status: AlertStatus;
-  imageUrl: string | null;
-  sentBy: string;
-  departments: AlertDeptDelivery[];
-  createdAt: string;
-}
-
-// ===== SEED DATA =====
+// ===== SEED DATA (offline fallback) =====
 const SEED_DEPARTMENTS: Department[] = [
   { id: "d1", name: "Colombo Police Division", code: "CPD", description: "Main police division covering Colombo district and surrounding areas.", status: "Active", createdAt: "2024-01-15", userCount: 0 },
   { id: "d2", name: "Traffic Police Division", code: "TPD", description: "Responsible for traffic regulation and road safety enforcement.", status: "Active", createdAt: "2024-01-15", userCount: 0 },
@@ -106,14 +108,16 @@ interface AppContextType {
   departments: Department[];
   users: User[];
   alerts: Alert[];
-  addDepartment: (dept: Omit<Department, "id" | "createdAt" | "userCount">) => void;
-  updateDepartment: (id: string, data: Partial<Department>) => void;
-  deleteDepartment: (id: string) => void;
-  addUser: (user: Omit<User, "id" | "createdAt" | "lastActive">) => void;
-  updateUser: (id: string, data: Partial<User>) => void;
-  deleteUser: (id: string) => void;
-  addAlert: (alert: Omit<Alert, "id" | "createdAt">) => void;
-  deleteAlert: (id: string) => void;
+  loading: boolean;
+  connected: boolean;
+  addDepartment: (data: CreateDepartmentInput) => Promise<void>;
+  updateDepartment: (id: string, data: UpdateDepartmentInput) => Promise<void>;
+  deleteDepartment: (id: string) => Promise<void>;
+  addUser: (input: CreateUserInput) => Promise<void>;
+  updateUser: (id: string, data: UpdateUserInput) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  addAlert: (data: CreateAlertInput) => Promise<void>;
+  deleteAlert: (id: string) => Promise<void>;
   getDepartmentById: (id: string) => Department | undefined;
   getUserById: (id: string) => User | undefined;
   getAlertById: (id: string) => Alert | undefined;
@@ -121,11 +125,6 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-let deptCounter = SEED_DEPARTMENTS.length + 1;
-let userCounter = SEED_USERS.length + 1;
-let alertCounter = SEED_ALERTS.length + 1;
-
-// Compute user counts
 function computeUserCounts(depts: Department[], users: User[]): Department[] {
   return depts.map(d => ({
     ...d,
@@ -133,60 +132,109 @@ function computeUserCounts(depts: Department[], users: User[]): Department[] {
   }));
 }
 
+function toDeptIdMap(depts: Department[]): Map<string, string> {
+  return new Map(depts.map(d => [d.name, d.id]));
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [rawDepts, setRawDepts] = useState<Department[]>(SEED_DEPARTMENTS);
-  const [users, setUsers] = useState<User[]>(SEED_USERS);
-  const [alerts, setAlerts] = useState<Alert[]>(SEED_ALERTS);
+  const [rawDepts, setRawDepts] = useState<Department[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [connected, setConnected] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAll() {
+      try {
+        const [deptDtos, userDtos, messageDtos] = await Promise.all([
+          departmentService.findAll(),
+          userService.findAll(),
+          messageService.findAll(),
+        ]);
+
+        const nameToId = new Map<string, string>();
+        deptDtos.forEach(d => nameToId.set(d.name, String(d.d_id)));
+
+        const loadedUsers = userDtos.map(u => userFromDTO(u, nameToId));
+        const loadedDepts = deptDtos.map(d =>
+          departmentFromDTO(d, loadedUsers.filter(u => u.departmentId === String(d.d_id)).length)
+        );
+        const loadedAlerts = messageDtos.map(m => alertFromDTO(m));
+
+        if (cancelled) return;
+        setUsers(loadedUsers);
+        setRawDepts(loadedDepts);
+        setAlerts(loadedAlerts);
+        setConnected(true);
+      } catch {
+        if (cancelled) return;
+        setRawDepts(SEED_DEPARTMENTS);
+        setUsers(SEED_USERS);
+        setAlerts(SEED_ALERTS);
+        setConnected(false);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadAll();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Compute departments with live user counts
   const departments = computeUserCounts(rawDepts, users);
+  const deptNameOf = (id: string): string => rawDepts.find(d => d.id === id)?.name ?? "";
 
-  const addDepartment = useCallback((data: Omit<Department, "id" | "createdAt" | "userCount">) => {
-    const newDept: Department = {
-      ...data,
-      id: `d${deptCounter++}`,
-      createdAt: new Date().toISOString().split("T")[0],
-      userCount: 0,
-    };
-    setRawDepts(prev => [...prev, newDept]);
+  const addDepartment = useCallback(async (data: CreateDepartmentInput) => {
+    const dto = await departmentService.create(toCreateDepartmentDTO(data));
+    const created = departmentFromDTO(dto);
+    setRawDepts(prev => [...prev, created]);
   }, []);
 
-  const updateDepartment = useCallback((id: string, data: Partial<Department>) => {
-    setRawDepts(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
+  const updateDepartment = useCallback(async (id: string, data: UpdateDepartmentInput) => {
+    const updated = departmentFromDTO(await departmentService.update(id, data));
+    setRawDepts(prev => prev.map(d => (d.id === id ? { ...d, ...updated } : d)));
   }, []);
 
-  const deleteDepartment = useCallback((id: string) => {
+  const deleteDepartment = useCallback(async (id: string) => {
+    await departmentService.remove(id);
     setRawDepts(prev => prev.filter(d => d.id !== id));
   }, []);
 
-  const addUser = useCallback((data: Omit<User, "id" | "createdAt" | "lastActive">) => {
-    const newUser: User = {
-      ...data,
-      id: `u${userCounter++}`,
-      createdAt: new Date().toISOString().split("T")[0],
-      lastActive: new Date().toISOString().split("T")[0],
-    };
-    setUsers(prev => [...prev, newUser]);
-  }, []);
+  const addUser = useCallback(async (input: CreateUserInput) => {
+    const departmentName = deptNameOf(input.departmentId);
+    const dto = await userService.create(toCreateUserDTO(input, departmentName));
+    const created = userFromDTO(dto, new Map([[departmentName, input.departmentId]]));
+    setUsers(prev => [...prev, created]);
+  }, [deptNameOf]);
 
-  const updateUser = useCallback((id: string, data: Partial<User>) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
-  }, []);
+  const updateUser = useCallback(async (id: string, data: UpdateUserInput) => {
+    const departmentName = data.departmentId ? deptNameOf(data.departmentId) : undefined;
+    const dto = await userService.update(id, toUpdateUserDTO(data, departmentName));
+    const updated = departmentName
+      ? userFromDTO(dto, new Map([[departmentName, data.departmentId!]]))
+      : userFromDTO(dto, toDeptIdMap(rawDepts));
+    setUsers(prev => prev.map(u => (u.id === id ? { ...u, ...updated } : u)));
+  }, [deptNameOf, rawDepts]);
 
-  const deleteUser = useCallback((id: string) => {
+  const deleteUser = useCallback(async (id: string) => {
+    await userService.remove(id);
     setUsers(prev => prev.filter(u => u.id !== id));
   }, []);
 
-  const addAlert = useCallback((data: Omit<Alert, "id" | "createdAt">) => {
-    const newAlert: Alert = {
-      ...data,
-      id: `a${alertCounter++}`,
-      createdAt: new Date().toISOString(),
-    };
-    setAlerts(prev => [newAlert, ...prev]);
+  const addAlert = useCallback(async (data: CreateAlertInput) => {
+    const dto = await messageService.create(toCreateMessageDTO(data));
+    const created = alertFromDTO(dto);
+    setAlerts(prev => [created, ...prev]);
   }, []);
 
-  const deleteAlert = useCallback((id: string) => {
+  const deleteAlert = useCallback(async (id: string) => {
+    await messageService.remove(id);
     setAlerts(prev => prev.filter(a => a.id !== id));
   }, []);
 
@@ -196,7 +244,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      departments, users, alerts,
+      departments, users, alerts, loading, connected,
       addDepartment, updateDepartment, deleteDepartment,
       addUser, updateUser, deleteUser,
       addAlert, deleteAlert,

@@ -18,22 +18,30 @@ export const createMessage = async (
       content,
       date,
       time,
+      priority,
+      status,
+      sentBy,
+      departments,
     } = req.body;
 
-    if (!image || !title || !content || !date || !time) {
+    if (!title || !content) {
       res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Title and content are required",
       });
       return;
     }
 
     const message = messageRepository.create({
-      image,
+      image: image ?? "",
       title,
       content,
-      date: new Date(date),
-      time,
+      date: date ? new Date(date) : new Date(),
+      time: time ?? new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      priority: priority ?? "Medium",
+      status: status ?? "Sent",
+      sentBy: sentBy ?? "",
+      departments: departments ?? [],
     });
 
     const savedMessage = await messageRepository.save(message);
@@ -170,6 +178,10 @@ export const updateMessage = async (
       content,
       date,
       time,
+      priority,
+      status,
+      sentBy,
+      departments,
     } = req.body;
 
     if (image !== undefined) {
@@ -190,6 +202,22 @@ export const updateMessage = async (
 
     if (time !== undefined) {
       message.time = time;
+    }
+
+    if (priority !== undefined) {
+      message.priority = priority;
+    }
+
+    if (status !== undefined) {
+      message.status = status;
+    }
+
+    if (sentBy !== undefined) {
+      message.sentBy = sentBy;
+    }
+
+    if (departments !== undefined) {
+      message.departments = departments;
     }
 
     const updatedMessage =

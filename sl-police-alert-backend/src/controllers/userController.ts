@@ -13,7 +13,7 @@ export const createUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, police_id, department, email, password, contact } = req.body;
+    const { name, police_id, department, email, password, contact, role, status } = req.body;
 
     if (!name || !police_id || !department || !email || !password || !contact) {
       res.status(400).json({
@@ -58,6 +58,10 @@ export const createUser = async (
       email,
       password,
       contact,
+      role: role ?? "Police Officer",
+      status: status ?? "Active",
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
     });
 
     const savedUser = await userRepository.save(user);
@@ -179,7 +183,7 @@ export const updateUser = async (
       return;
     }
 
-    const { name, police_id, department, email, password, contact } = req.body;
+    const { name, police_id, department, email, password, contact, role, status, lastActive } = req.body;
 
     if (name !== undefined) user.name = name;
 
@@ -192,6 +196,12 @@ export const updateUser = async (
     if (password !== undefined) user.password = password;
 
     if (contact !== undefined) user.contact = contact;
+
+    if (role !== undefined) user.role = role;
+
+    if (status !== undefined) user.status = status;
+
+    if (lastActive !== undefined) user.lastActive = lastActive;
 
     const updatedUser = await userRepository.save(user);
 
