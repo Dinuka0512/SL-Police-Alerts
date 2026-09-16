@@ -11,12 +11,13 @@ import SearchBar from "~/components/ui/SearchBar";
 import Pagination from "~/components/ui/Pagination";
 import ConfirmDialog from "~/components/ui/ConfirmDialog";
 import EmptyState from "~/components/ui/EmptyState";
+import OfflineState from "~/components/ui/OfflineState";
 import Modal from "~/components/ui/Modal";
 
 const PER_PAGE = 8;
 
 export default function UsersPage() {
-  const { users, departments, deleteUser, getDepartmentById } = useApp();
+  const { users, departments, connected, deleteUser, getDepartmentById } = useApp();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -122,7 +123,9 @@ export default function UsersPage() {
       {/* Table */}
       <div className="card">
         <div className="table-wrap">
-          {paged.length === 0 ? (
+          {!connected ? (
+            <OfflineState />
+          ) : paged.length === 0 ? (
             <EmptyState
               icon={<UsersIcon size={32} />}
               title="No users found"

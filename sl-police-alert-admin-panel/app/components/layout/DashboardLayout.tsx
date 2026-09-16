@@ -29,7 +29,7 @@ export default function DashboardLayout() {
         <Header onMenuToggle={() => setSidebarOpen(prev => !prev)} />
         {!loading && !connected && (
           <div className="offline-banner">
-            Backend server is offline — showing sample data. Changes will not be saved.
+            Server is offline — data is currently unavailable. Please start the backend and refresh.
           </div>
         )}
         <div className="page-content">

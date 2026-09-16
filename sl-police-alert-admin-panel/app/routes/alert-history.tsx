@@ -9,6 +9,7 @@ import SearchBar from "~/components/ui/SearchBar";
 import Pagination from "~/components/ui/Pagination";
 import ConfirmDialog from "~/components/ui/ConfirmDialog";
 import EmptyState from "~/components/ui/EmptyState";
+import OfflineState from "~/components/ui/OfflineState";
 import Modal from "~/components/ui/Modal";
 
 const PER_PAGE = 8;
@@ -21,7 +22,7 @@ const PRIORITY_INDICATOR: Record<AlertPriority, string> = {
 };
 
 export default function AlertHistoryPage() {
-  const { alerts, departments, deleteAlert, getAlertById, getDepartmentById } = useApp();
+  const { alerts, departments, connected, deleteAlert, getAlertById, getDepartmentById } = useApp();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -97,7 +98,9 @@ export default function AlertHistoryPage() {
 
       <div className="card">
         <div className="table-wrap">
-          {paged.length === 0 ? (
+          {!connected ? (
+            <OfflineState />
+          ) : paged.length === 0 ? (
             <EmptyState
               icon={<History size={32} />}
               title="No alerts found"

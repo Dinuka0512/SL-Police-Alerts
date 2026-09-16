@@ -11,6 +11,7 @@ import Badge, { statusToBadge } from "~/components/ui/Badge";
 import SearchBar from "~/components/ui/SearchBar";
 import ConfirmDialog from "~/components/ui/ConfirmDialog";
 import EmptyState from "~/components/ui/EmptyState";
+import OfflineState from "~/components/ui/OfflineState";
 import Modal from "~/components/ui/Modal";
 
 interface DeptFormData {
@@ -29,7 +30,7 @@ interface DeptFormErrors {
 const EMPTY_FORM: DeptFormData = { name: "", code: "", description: "", status: "Active" };
 
 export default function DepartmentsPage() {
-  const { departments, addDepartment, updateDepartment, deleteDepartment } = useApp();
+  const { departments, connected, addDepartment, updateDepartment, deleteDepartment } = useApp();
   const { showToast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -183,7 +184,9 @@ export default function DepartmentsPage() {
       </div>
 
       {/* Dept cards grid */}
-      {filtered.length === 0 ? (
+      {!connected ? (
+        <OfflineState />
+      ) : filtered.length === 0 ? (
         <div className="card">
           <EmptyState
             icon={<Building2 size={32} />}
