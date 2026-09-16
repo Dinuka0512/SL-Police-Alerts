@@ -4,6 +4,7 @@ export type UserRole = "Admin" | "Police Officer" | "Department Officer";
 export type AlertPriority = "Low" | "Medium" | "High" | "Critical";
 export type AlertStatus = "Sent" | "Delivered" | "Failed";
 export type DeliveryStatus = "Delivered" | "Pending" | "Failed";
+export type PenaltyStatus = "Not paid" | "Paid";
 
 export interface Department {
   id: string;
@@ -54,6 +55,24 @@ export interface AuthUser {
   role: UserRole;
   status: UserStatus;
 }
+
+export interface Penalty {
+  id: string;
+  code: string;
+  violation: string;
+  fee: string;
+  vehicle: string;
+  nic: string;
+  location: string;
+  date: string;
+  issuedBy: string;
+  status: PenaltyStatus;
+  createdAt: string;
+}
+
+export type UpdatePenaltyInput = Partial<
+  Pick<Penalty, "code" | "violation" | "fee" | "vehicle" | "nic" | "location" | "date" | "issuedBy" | "status">
+>;
 
 export type CreateDepartmentInput = Omit<Department, "id" | "createdAt" | "userCount">;
 export type UpdateDepartmentInput = Partial<

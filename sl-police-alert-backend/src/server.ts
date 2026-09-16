@@ -10,6 +10,7 @@ import userRoutes from "./routes/userRoute";
 import departmentRoutes from "./routes/departmentRoute";
 import messageRoutes from "./routes/messageRoute";
 import emergancyContactRoutes from "./routes/emergancyContactRoute";
+import penaltyRoutes from "./routes/penaltyRoute";
 import authRoutes from "./routes/authRoute";
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/department", departmentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/emergancyContacts", emergancyContactRoutes);
+app.use("/api/penalties", penaltyRoutes);
 
 const PORT = Number(process.env.PORT) || 5000;
 

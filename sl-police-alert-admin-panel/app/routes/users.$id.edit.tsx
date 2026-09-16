@@ -12,6 +12,16 @@ interface FormErrors {
   departmentId?: string;
 }
 
+function Field({ label, id: fid, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor={fid}>{label}{required && <span className="required">*</span>}</label>
+      {children}
+      {error && <div className="form-error">⚠ {error}</div>}
+    </div>
+  );
+}
+
 export default function EditUserPage() {
   const { id } = useParams<{ id: string }>();
   const { getUserById, departments, updateUser } = useApp();
@@ -83,14 +93,6 @@ export default function EditUserPage() {
       setSaving(false);
     }
   }
-
-  const Field = ({ label, id: fid, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) => (
-    <div className="form-group">
-      <label className="form-label" htmlFor={fid}>{label}{required && <span className="required">*</span>}</label>
-      {children}
-      {error && <div className="form-error">⚠ {error}</div>}
-    </div>
-  );
 
   return (
     <div>

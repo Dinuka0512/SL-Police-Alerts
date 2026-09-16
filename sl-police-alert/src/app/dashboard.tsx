@@ -1,12 +1,61 @@
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { ALERTS, AlertCard } from '@/components/alert-card';
+import { AlertCard, AlertItem } from '@/components/alert-card';
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
+import { api, RawMessage } from '@/lib/api';
+import { timeAgo } from '@/lib/format';
+import { useAuth } from '@/store/auth';
+
+function toAlert(message: RawMessage): AlertItem {
+  const level = message.priority?.toLowerCase();
+  return {
+    id: String(message.m_id),
+    level: level === 'high' || level === 'medium' || level === 'low' ? level : 'low',
+    title: message.title,
+    location: message.sentBy || 'Sri Lanka Police',
+    time: timeAgo(message.date, message.time),
+  };
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { token } = useAuth();
+
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const messages = await api.getMessages();
+        if (!cancelled) setAlerts(messages.map(toAlert));
+      } catch (err) {
+        if (err instanceof Error && err.message === 'Invalid or expired token') {
+          router.replace('/login');
+          return;
+        }
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load alerts');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, router]);
 
   return (
     <View className="flex-1 bg-slate-100">
@@ -55,7 +104,16 @@ export default function DashboardScreen() {
           <Text className="text-slate-900 text-lg font-bold mb-3">
             Recent Alerts
           </Text>
-          {ALERTS.map(item => (
+          {isLoading && <ActivityIndicator className="py-8" color="#1D4ED8" />}
+          {!isLoading && error && (
+            <Text className="text-red-600 text-sm text-center py-8">{error}</Text>
+          )}
+          {!isLoading && !error && alerts.length === 0 && (
+            <Text className="text-slate-400 text-sm text-center py-8">
+              No alerts yet.
+            </Text>
+          )}
+          {alerts.map(item => (
             <AlertCard key={item.id} item={item} />
           ))}
         </View>

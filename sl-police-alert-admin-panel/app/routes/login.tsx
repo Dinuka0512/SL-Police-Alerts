@@ -121,31 +121,6 @@ export default function LoginPage() {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-
-        <div
-          style={{
-            marginTop: 22,
-            padding: "12px 14px",
-            borderRadius: 10,
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            fontSize: 12,
-            color: "#475569",
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-            <WifiOff size={13} /> Demo account
-          </div>
-          <div>
-            Email: <strong>{demoHint.email}</strong>
-          </div>
-          <div>
-            Password: <strong>{demoHint.password}</strong>
-          </div>
-          <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 8, padding: "4px 10px" }} onClick={fillDemo}>
-            Use demo credentials
-          </button>
-        </div>
       </div>
     </div>
   );

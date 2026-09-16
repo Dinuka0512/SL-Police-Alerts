@@ -32,6 +32,18 @@ const INITIAL: FormData = {
   departmentId: "", role: "Police Officer", status: "Active",
 };
 
+function Field({ label, id, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor={id}>
+        {label}{required && <span className="required">*</span>}
+      </label>
+      {children}
+      {error && <div className="form-error">⚠ {error}</div>}
+    </div>
+  );
+}
+
 export default function AddUserPage() {
   const { departments, addUser } = useApp();
   const { showToast } = useToast();
@@ -89,16 +101,6 @@ export default function AddUserPage() {
       setSaving(false);
     }
   }
-
-  const Field = ({ label, id, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) => (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>
-        {label}{required && <span className="required">*</span>}
-      </label>
-      {children}
-      {error && <div className="form-error">⚠ {error}</div>}
-    </div>
-  );
 
   return (
     <div>

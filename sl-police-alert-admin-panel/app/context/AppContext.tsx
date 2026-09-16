@@ -6,22 +6,25 @@ import React, {
   useEffect,
 } from "react";
 
-import { departmentService, userService, messageService } from "~/services";
+import { departmentService, userService, messageService, penaltyService } from "~/services";
 
 import {
   departmentFromDTO,
   userFromDTO,
   alertFromDTO,
+  penaltyFromDTO,
   toCreateDepartmentDTO,
   toCreateUserDTO,
   toUpdateUserDTO,
   toCreateMessageDTO,
+  toUpdatePenaltyDTO,
 } from "~/dto/mappers";
 
 import type {
   Department,
   User,
   Alert,
+  Penalty,
   DeptStatus,
   UserRole,
   UserStatus,
@@ -33,6 +36,7 @@ import type {
   CreateUserInput,
   UpdateUserInput,
   CreateAlertInput,
+  UpdatePenaltyInput,
 } from "~/types";
 
 // Re-export types so existing page imports keep working.
@@ -40,6 +44,8 @@ export type {
   Department,
   User,
   Alert,
+  Penalty,
+  PenaltyStatus,
   AlertDeptDelivery,
   DeptStatus,
   UserStatus,
@@ -54,6 +60,7 @@ interface AppContextType {
   departments: Department[];
   users: User[];
   alerts: Alert[];
+  penalties: Penalty[];
   loading: boolean;
   connected: boolean;
   addDepartment: (data: CreateDepartmentInput) => Promise<void>;
@@ -64,9 +71,12 @@ interface AppContextType {
   deleteUser: (id: string) => Promise<void>;
   addAlert: (data: CreateAlertInput) => Promise<void>;
   deleteAlert: (id: string) => Promise<void>;
+  updatePenalty: (id: string, data: UpdatePenaltyInput) => Promise<void>;
+  deletePenalty: (id: string) => Promise<void>;
   getDepartmentById: (id: string) => Department | undefined;
   getUserById: (id: string) => User | undefined;
   getAlertById: (id: string) => Alert | undefined;
+  getPenaltyById: (id: string) => Penalty | undefined;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -86,6 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [rawDepts, setRawDepts] = useState<Department[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [connected, setConnected] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -94,10 +105,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     async function loadAll() {
       try {
-        const [deptDtos, userDtos, messageDtos] = await Promise.all([
+        const [deptDtos, userDtos, messageDtos, penaltyDtos] = await Promise.all([
           departmentService.findAll(),
           userService.findAll(),
           messageService.findAll(),
+          penaltyService.findAll(),
         ]);
 
         const nameToId = new Map<string, string>();
@@ -108,17 +120,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           departmentFromDTO(d, loadedUsers.filter(u => u.departmentId === String(d.d_id)).length)
         );
         const loadedAlerts = messageDtos.map(m => alertFromDTO(m));
+        const loadedPenalties = penaltyDtos.map(p => penaltyFromDTO(p));
 
         if (cancelled) return;
         setUsers(loadedUsers);
         setRawDepts(loadedDepts);
         setAlerts(loadedAlerts);
+        setPenalties(loadedPenalties);
         setConnected(true);
       } catch {
         if (cancelled) return;
         setRawDepts([]);
         setUsers([]);
         setAlerts([]);
+        setPenalties([]);
         setConnected(false);
       } finally {
         if (!cancelled) setLoading(false);
@@ -184,17 +199,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAlerts(prev => prev.filter(a => a.id !== id));
   }, []);
 
+  const updatePenalty = useCallback(async (id: string, data: UpdatePenaltyInput) => {
+    const updated = penaltyFromDTO(await penaltyService.update(id, toUpdatePenaltyDTO(data)));
+    setPenalties(prev => prev.map(p => (p.id === id ? { ...p, ...updated } : p)));
+  }, []);
+
+  const deletePenalty = useCallback(async (id: string) => {
+    await penaltyService.remove(id);
+    setPenalties(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   const getDepartmentById = useCallback((id: string) => departments.find(d => d.id === id), [departments]);
   const getUserById = useCallback((id: string) => users.find(u => u.id === id), [users]);
   const getAlertById = useCallback((id: string) => alerts.find(a => a.id === id), [alerts]);
+  const getPenaltyById = useCallback((id: string) => penalties.find(p => p.id === id), [penalties]);
 
   return (
     <AppContext.Provider value={{
-      departments, users, alerts, loading, connected,
+      departments, users, alerts, penalties, loading, connected,
       addDepartment, updateDepartment, deleteDepartment,
       addUser, updateUser, deleteUser,
       addAlert, deleteAlert,
-      getDepartmentById, getUserById, getAlertById,
+      updatePenalty, deletePenalty,
+      getDepartmentById, getUserById, getAlertById, getPenaltyById,
     }}>
       {children}
     </AppContext.Provider>

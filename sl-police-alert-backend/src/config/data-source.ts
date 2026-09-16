@@ -6,6 +6,7 @@ import { Department } from "../entities/Department";
 import { Message } from "../entities/Message";
 import { EmergancyContact } from "../entities/EmergancyContact";
 import { RefreshToken } from "../entities/RefreshToken";
+import { Penalty } from "../entities/Penalty";
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ export const AppDataSource = new DataSource({
 
   url: process.env.MONGO_URI,
 
-  entities: [User, Department, Message, EmergancyContact, RefreshToken],
+  entities: [User, Department, Message, EmergancyContact, RefreshToken, Penalty],
 
   synchronize: true,
 

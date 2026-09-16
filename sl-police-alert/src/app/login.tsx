@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -12,24 +13,37 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { api } from '@/lib/api';
+import { setAuth } from '@/store/auth';
+
 const PAGE = require('@/assets/images/police.png');
 
 export default function LoginScreen() {
   const router = useRouter();
 
-  const [policeId, setPoliceId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Missing details', 'Please enter your email and password.');
+      return;
+    }
+
     setIsSubmitting(true);
-    // TODO: Replace with a real auth call to the backend
-    // (POST /auth/login on the Express API) once it exists.
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const data = await api.login(email.trim().toLowerCase(), password);
+      setAuth(data.token, data.refreshToken, data.user);
       router.replace('/dashboard');
-    }, 600);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to sign in. Try again.';
+      Alert.alert('Sign in failed', message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -70,15 +84,16 @@ export default function LoginScreen() {
                 </Text>
 
                 <Text className="text-slate-700 text-sm font-semibold mb-1.5">
-                  Police ID
+                  Email
                 </Text>
                 <TextInput
-                  value={policeId}
-                  onChangeText={setPoliceId}
-                  placeholder="Enter your Police ID"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
                   placeholderTextColor="#94A3B8"
-                  autoCapitalize="characters"
+                  autoCapitalize="none"
                   autoCorrect={false}
+                  keyboardType="email-address"
                   className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 text-base"
                 />
 

@@ -29,6 +29,46 @@ interface DeptFormErrors {
 
 const EMPTY_FORM: DeptFormData = { name: "", code: "", description: "", status: "Active" };
 
+function DeptFormFields({ form, errors, setField }: {
+  form: DeptFormData;
+  errors: DeptFormErrors;
+  setField: (k: keyof DeptFormData, v: string) => void;
+}) {
+  return (
+    <>
+      <div className="form-group">
+        <label className="form-label" htmlFor="dept-name">Department Name<span className="required">*</span></label>
+        <input id="dept-name" type="text" className={`form-control ${errors.name ? "error" : ""}`}
+          placeholder="e.g. Colombo Police Division" value={form.name} onChange={e => setField("name", e.target.value)} />
+        {errors.name && <div className="form-error">⚠ {errors.name}</div>}
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="dept-code">Department Code<span className="required">*</span></label>
+        <input id="dept-code" type="text" className={`form-control ${errors.code ? "error" : ""}`}
+          placeholder="e.g. CPD" value={form.code}
+          onChange={e => setField("code", e.target.value.toUpperCase())} />
+        {errors.code && <div className="form-error">⚠ {errors.code}</div>}
+        <div className="form-hint">2–10 uppercase letters and numbers only</div>
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="dept-desc">Description<span className="required">*</span></label>
+        <textarea id="dept-desc" className={`form-control ${errors.description ? "error" : ""}`}
+          placeholder="Brief description of this department's responsibilities"
+          value={form.description} onChange={e => setField("description", e.target.value)}
+          style={{ minHeight: 90 }} />
+        {errors.description && <div className="form-error">⚠ {errors.description}</div>}
+      </div>
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label" htmlFor="dept-status">Status</label>
+        <select id="dept-status" className="form-control" value={form.status} onChange={e => setField("status", e.target.value as DeptStatus)}>
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </div>
+    </>
+  );
+}
+
 export default function DepartmentsPage() {
   const { departments, connected, addDepartment, updateDepartment, deleteDepartment } = useApp();
   const { showToast } = useToast();
@@ -120,40 +160,6 @@ export default function DepartmentsPage() {
       setDeleteId(null);
     }
   }
-
-  const DeptFormFields = () => (
-    <>
-      <div className="form-group">
-        <label className="form-label" htmlFor="dept-name">Department Name<span className="required">*</span></label>
-        <input id="dept-name" type="text" className={`form-control ${errors.name ? "error" : ""}`}
-          placeholder="e.g. Colombo Police Division" value={form.name} onChange={e => setField("name", e.target.value)} />
-        {errors.name && <div className="form-error">⚠ {errors.name}</div>}
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="dept-code">Department Code<span className="required">*</span></label>
-        <input id="dept-code" type="text" className={`form-control ${errors.code ? "error" : ""}`}
-          placeholder="e.g. CPD" value={form.code}
-          onChange={e => setField("code", e.target.value.toUpperCase())} />
-        {errors.code && <div className="form-error">⚠ {errors.code}</div>}
-        <div className="form-hint">2–10 uppercase letters and numbers only</div>
-      </div>
-      <div className="form-group">
-        <label className="form-label" htmlFor="dept-desc">Description<span className="required">*</span></label>
-        <textarea id="dept-desc" className={`form-control ${errors.description ? "error" : ""}`}
-          placeholder="Brief description of this department's responsibilities"
-          value={form.description} onChange={e => setField("description", e.target.value)}
-          style={{ minHeight: 90 }} />
-        {errors.description && <div className="form-error">⚠ {errors.description}</div>}
-      </div>
-      <div className="form-group" style={{ marginBottom: 0 }}>
-        <label className="form-label" htmlFor="dept-status">Status</label>
-        <select id="dept-status" className="form-control" value={form.status} onChange={e => setField("status", e.target.value as DeptStatus)}>
-          <option>Active</option>
-          <option>Inactive</option>
-        </select>
-      </div>
-    </>
-  );
 
   return (
     <div>
@@ -250,7 +256,7 @@ export default function DepartmentsPage() {
             <Plus size={15} />{saving ? "Creating..." : "Create Department"}
           </button>
         </>}>
-        <DeptFormFields />
+        <DeptFormFields form={form} errors={errors} setField={setField} />
       </Modal>
 
       {/* Edit Modal */}
@@ -261,7 +267,7 @@ export default function DepartmentsPage() {
             <Pencil size={15} />{saving ? "Saving..." : "Save Changes"}
           </button>
         </>}>
-        <DeptFormFields />
+        <DeptFormFields form={form} errors={errors} setField={setField} />
       </Modal>
 
       {/* View Modal */}

@@ -7,6 +7,7 @@ export default [
     route("users/new", "routes/users.new.tsx"),
     route("users/:id/edit", "routes/users.$id.edit.tsx"),
     route("departments", "routes/departments.tsx"),
+    route("penalties", "routes/penalties.tsx"),
     route("send-alert", "routes/send-alert.tsx"),
     route("alert-history", "routes/alert-history.tsx"),
 route("settings", "routes/settings.tsx"),

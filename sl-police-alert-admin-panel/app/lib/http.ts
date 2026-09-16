@@ -1,5 +1,5 @@
 export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
+  (import.meta.env.VITE_API_URL as string | undefined) ?? "http://8.234.94.139:5000";
 
 export class ApiError extends Error {
   status: number;

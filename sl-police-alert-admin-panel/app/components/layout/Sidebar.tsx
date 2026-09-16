@@ -6,6 +6,7 @@ import {
   Building2,
   Send,
   History,
+  Receipt,
   Settings,
   LogOut,
   Shield,
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/users", icon: Users, label: "Users" },
   { to: "/departments", icon: Building2, label: "Departments" },
+  { to: "/penalties", icon: Receipt, label: "Penalties" },
   { to: "/send-alert", icon: Send, label: "Send Alert" },
   { to: "/alert-history", icon: History, label: "Alert History" },
 ];

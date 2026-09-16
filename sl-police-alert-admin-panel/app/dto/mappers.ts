@@ -2,12 +2,15 @@ import type { DepartmentDTO, CreateDepartmentDTO } from "./department.dto";
 import type { UserDTO, CreateUserDTO, UpdateUserDTO } from "./user.dto";
 import type { MessageDTO, CreateMessageDTO } from "./message.dto";
 import type { AuthUserDTO } from "./auth.dto";
+import type { PenaltyDTO, UpdatePenaltyDTO } from "./penalty.dto";
 
 import type {
   Department,
   User,
   Alert,
   AuthUser,
+  Penalty,
+  PenaltyStatus,
   DeptStatus,
   UserRole,
   UserStatus,
@@ -17,6 +20,7 @@ import type {
   CreateUserInput,
   UpdateUserInput,
   CreateAlertInput,
+  UpdatePenaltyInput,
 } from "~/types";
 
 // ===== Department =====
@@ -136,4 +140,37 @@ export function authUserFromDTO(dto: AuthUserDTO): AuthUser {
     role: (dto.role ?? "Police Officer") as UserRole,
     status: (dto.status ?? "Active") as UserStatus,
   };
+}
+
+// ===== Penalty =====
+export function penaltyFromDTO(dto: PenaltyDTO): Penalty {
+  return {
+    id: String(dto.p_id),
+    code: dto.code ?? "",
+    violation: dto.violation,
+    fee: dto.fee,
+    vehicle: dto.vehicle ?? "",
+    nic: dto.nic ?? "",
+    location: dto.location ?? "",
+    date: dto.date ?? "",
+    issuedBy: dto.issuedBy ?? "",
+    status: (dto.status ?? "Not paid") as PenaltyStatus,
+    createdAt: dto.createdAt ?? "",
+  };
+}
+
+export function toUpdatePenaltyDTO(
+  input: UpdatePenaltyInput
+): UpdatePenaltyDTO {
+  const dto: UpdatePenaltyDTO = {};
+  if (input.code !== undefined) dto.code = input.code;
+  if (input.violation !== undefined) dto.violation = input.violation;
+  if (input.fee !== undefined) dto.fee = input.fee;
+  if (input.vehicle !== undefined) dto.vehicle = input.vehicle;
+  if (input.nic !== undefined) dto.nic = input.nic;
+  if (input.location !== undefined) dto.location = input.location;
+  if (input.date !== undefined) dto.date = input.date;
+  if (input.status !== undefined) dto.status = input.status;
+  if (input.issuedBy !== undefined) dto.issuedBy = input.issuedBy;
+  return dto;
 }
