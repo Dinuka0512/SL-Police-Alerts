@@ -364,6 +364,10 @@ html, body {
   border-bottom: none;
 }
 
+.data-table.users-table td {
+  font-size: 12px;
+}
+
 /* ===== BADGES ===== */
 .badge {
   display: inline-flex;

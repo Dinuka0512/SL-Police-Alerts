@@ -5,14 +5,15 @@ import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'rea
 import { AlertCard, AlertItem } from '@/components/alert-card';
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
-import { api, RawMessage } from '@/lib/api';
 import { timeAgo } from '@/lib/format';
+import { messageService } from '@/services';
 import { useAuth } from '@/store/auth';
+import type { Message } from '@/types';
 
-function toAlert(message: RawMessage): AlertItem {
+function toAlert(message: Message): AlertItem {
   const level = message.priority?.toLowerCase();
   return {
-    id: String(message.m_id),
+    id: message.id,
     level: level === 'high' || level === 'medium' || level === 'low' ? level : 'low',
     title: message.title,
     location: message.sentBy || 'Sri Lanka Police',
@@ -37,7 +38,7 @@ export default function DashboardScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const messages = await api.getMessages();
+        const messages = await messageService.findAll();
         if (!cancelled) setAlerts(messages.map(toAlert));
       } catch (err) {
         if (err instanceof Error && err.message === 'Invalid or expired token') {

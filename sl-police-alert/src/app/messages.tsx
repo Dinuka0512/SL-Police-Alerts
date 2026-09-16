@@ -4,9 +4,10 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
-import { api, RawMessage } from '@/lib/api';
 import { timeAgo } from '@/lib/format';
+import { messageService } from '@/services';
 import { useAuth } from '@/store/auth';
+import type { Message } from '@/types';
 
 type MessageItem = {
   id: string;
@@ -16,9 +17,9 @@ type MessageItem = {
   time: string;
 };
 
-function toMessage(message: RawMessage): MessageItem {
+function toMessage(message: Message): MessageItem {
   return {
-    id: String(message.m_id),
+    id: message.id,
     title: message.title,
     body: message.content,
     station: message.sentBy || 'Sri Lanka Police',
@@ -43,7 +44,7 @@ export default function MessagesScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.getMessages();
+        const data = await messageService.findAll();
         if (!cancelled) setMessages(data.map(toMessage));
       } catch (err) {
         if (err instanceof Error && err.message === 'Invalid or expired token') {

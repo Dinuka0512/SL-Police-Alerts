@@ -4,7 +4,6 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -13,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { api } from '@/lib/api';
+import { authService } from '@/services';
 import { setAuth } from '@/store/auth';
 
 const PAGE = require('@/assets/images/police.png');
@@ -34,7 +33,7 @@ export default function LoginScreen() {
 
     setIsSubmitting(true);
     try {
-      const data = await api.login(email.trim().toLowerCase(), password);
+      const data = await authService.login(email.trim().toLowerCase(), password);
       setAuth(data.token, data.refreshToken, data.user);
       router.replace('/dashboard');
     } catch (error) {
@@ -49,10 +48,7 @@ export default function LoginScreen() {
   return (
     <View className="flex-1 bg-police-navy">
       <SafeAreaView className="flex-1">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView behavior="padding" className="flex-1">
           <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"

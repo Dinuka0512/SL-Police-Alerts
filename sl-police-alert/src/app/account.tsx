@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -14,6 +13,8 @@ import {
 
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
+import { authService } from '@/services';
+import { clearAuth, useAuth, type AuthUser } from '@/store/auth';
 
 type Profile = {
   name: string;
@@ -24,14 +25,16 @@ type Profile = {
   email: string;
 };
 
-const INITIAL_PROFILE: Profile = {
-  name: 'Officer Nimal Perera',
-  rank: 'Police Inspector',
-  badge: 'SP-4451',
-  station: 'Colombo Police HQ',
-  phone: '+94 77 123 4567',
-  email: 'officer@police.lk',
-};
+function toProfile(user: AuthUser | null): Profile {
+  return {
+    name: user?.name ?? 'Officer',
+    rank: user?.role ?? 'Police Officer',
+    badge: user?.police_id ?? '—',
+    station: user?.department ?? '—',
+    phone: user?.contact ?? '—',
+    email: user?.email ?? '—',
+  };
+}
 
 type MenuItem = {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -60,9 +63,14 @@ const inputClassName =
 
 export default function AccountScreen() {
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile>(INITIAL_PROFILE);
+  const { user, refreshToken } = useAuth();
+  const [profile, setProfile] = useState<Profile>(() => toProfile(user));
   const [showEdit, setShowEdit] = useState(false);
-  const [draft, setDraft] = useState<Profile>(INITIAL_PROFILE);
+  const [draft, setDraft] = useState<Profile>(() => toProfile(user));
+
+  useEffect(() => {
+    setProfile(toProfile(user));
+  }, [user]);
 
   const setDraftField = (field: keyof Profile, value: string) => {
     setDraft(prev => ({ ...prev, [field]: value }));
@@ -80,8 +88,15 @@ export default function AccountScreen() {
     setShowEdit(false);
   };
 
-  const handleSignOut = () => {
-    // TODO: Clear any stored auth/session state before signing out.
+  const handleSignOut = async () => {
+    if (refreshToken) {
+      try {
+        await authService.logout(refreshToken);
+      } catch {
+        // Ignore network errors on sign out.
+      }
+    }
+    clearAuth();
     router.replace('/login');
   };
 
@@ -200,17 +215,15 @@ const details: DetailRow[] = [
       <TabBar active="account" />
 
       {showEdit && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="absolute inset-0 z-50"
-        >
+        <KeyboardAvoidingView behavior="padding" className="absolute inset-0 z-50">
           <Pressable
             onPress={closeEdit}
             className="absolute inset-0 bg-black/50"
             accessibilityRole="button"
             accessibilityLabel="Close edit profile form"
           />
-          <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[88%]">
+          <View className="flex-1 justify-end" pointerEvents="box-none">
+            <View className="bg-white rounded-t-3xl max-h-[88%]">
             <View className="items-center pt-3 pb-1">
               <View className="h-1.5 w-10 rounded-full bg-slate-300" />
             </View>
@@ -304,7 +317,8 @@ const details: DetailRow[] = [
               >
                 <Text className="text-white font-bold text-base">Save Changes</Text>
               </Pressable>
-            </ScrollView>
+              </ScrollView>
+            </View>
           </View>
         </KeyboardAvoidingView>
       )}

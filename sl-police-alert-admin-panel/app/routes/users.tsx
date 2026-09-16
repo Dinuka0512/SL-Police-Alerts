@@ -137,7 +137,7 @@ export default function UsersPage() {
               }
             />
           ) : (
-            <table className="data-table">
+            <table className="data-table users-table">
               <thead>
                 <tr>
                   <th>#</th>
@@ -147,7 +147,6 @@ export default function UsersPage() {
                   <th>Department</th>
                   <th>Role</th>
                   <th>Status</th>
-                  <th className="hide-mobile">Created</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -156,13 +155,13 @@ export default function UsersPage() {
                   const dept = getDepartmentById(user.departmentId);
                   return (
                     <tr key={user.id}>
-                      <td style={{ color: "#94a3b8", fontSize: 12 }}>
+                      <td style={{ color: "#94a3b8" }}>
                         {(page - 1) * PER_PAGE + idx + 1}
                       </td>
                       <td>
                         <div className="flex items-center gap-3">
                           <div style={{
-                            width: 34, height: 34, borderRadius: "50%",
+                            width: 32, height: 32, borderRadius: "50%",
                             background: "linear-gradient(135deg, #1a3a6b, #0f2557)",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0
@@ -173,18 +172,16 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="hide-mobile" style={{ color: "#475569" }}>
-                        <div className="flex items-center gap-1"><Mail size={12} color="#94a3b8" />{user.email}</div>
+                        <div className="flex items-center gap-1"><Mail size={13} color="#94a3b8" />{user.email}</div>
                       </td>
                       <td className="hide-mobile">
-                        <div className="flex items-center gap-1" style={{ color: "#475569" }}><Phone size={12} color="#94a3b8" />{user.phone}</div>
+                        <div className="flex items-center gap-1" style={{ color: "#475569" }}><Phone size={13} color="#94a3b8" />{user.phone}</div>
                       </td>
                       <td>
-                        <span style={{ fontSize: 13, color: "#334155" }}>{dept?.name ?? "—"}</span>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{dept?.code}</div>
+                        <span style={{ color: "#334155" }}>{dept?.code ?? "—"}</span>
                       </td>
                       <td><Badge variant={roleToBadge(user.role)} /></td>
                       <td><Badge variant={statusToBadge(user.status)} /></td>
-                      <td className="hide-mobile" style={{ fontSize: 12, color: "#64748b" }}>{user.createdAt}</td>
                       <td>
                         <div className="flex items-center gap-1">
                           <button
@@ -193,7 +190,7 @@ export default function UsersPage() {
                             id={`view-user-${user.id}`}
                             onClick={() => setViewUser(user.id)}
                           >
-                            <Eye size={15} />
+                            <Eye size={16} />
                           </button>
                           <button
                             className="btn-icon"
@@ -201,7 +198,7 @@ export default function UsersPage() {
                             id={`edit-user-${user.id}`}
                             onClick={() => navigate(`/users/${user.id}/edit`)}
                           >
-                            <Pencil size={15} />
+                            <Pencil size={16} />
                           </button>
                           <button
                             className="btn-icon danger"
@@ -209,7 +206,7 @@ export default function UsersPage() {
                             id={`delete-user-${user.id}`}
                             onClick={() => setDeleteId(user.id)}
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
