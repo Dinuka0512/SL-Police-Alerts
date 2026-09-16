@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { authenticateToken } from "../middleware/authMiddleware";
+
 import {
   createEmergancyContact,
   getAllEmergancyContacts,
@@ -9,6 +11,8 @@ import {
 } from "../controllers/emergancyContactController";
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.post("/", createEmergancyContact);
 

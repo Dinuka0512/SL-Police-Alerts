@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { randomBytes } from "crypto";
 
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entities/User";
+import { generateToken } from "../middleware/authMiddleware";
 
 const userRepository = AppDataSource.getMongoRepository(User);
 
@@ -53,7 +53,12 @@ export const login = async (
       success: true,
       message: "Login successful",
       data: {
-        token: randomBytes(32).toString("hex"),
+        token: generateToken({
+          id: String(user.u_id),
+          email: user.email,
+          role: user.role,
+        }),
+        tokenType: "Bearer",
         user: {
           id: String(user.u_id),
           name: user.name,
