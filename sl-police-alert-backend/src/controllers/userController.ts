@@ -28,14 +28,7 @@ export const createUser = async (
     const normalizedEmail = String(email).toLowerCase().trim();
 
     const existingUser = await userRepository.findOne({
-      where: {
-        email: {
-          $regex: new RegExp(
-            `^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
-            "i"
-          ),
-        },
-      },
+      where: { email: normalizedEmail },
     });
 
     const existingDepartment = await departmentRepository.findOne({
