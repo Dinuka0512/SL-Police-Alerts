@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useApp } from "~/context/AppContext";
 import { useToast } from "~/context/ToastContext";
+import { isProtectedAdmin } from "~/lib/constants";
 import Badge, { statusToBadge, roleToBadge } from "~/components/ui/Badge";
 import SearchBar from "~/components/ui/SearchBar";
 import Pagination from "~/components/ui/Pagination";
@@ -47,6 +48,12 @@ export default function UsersPage() {
 
   async function handleDelete() {
     if (!deleteId) return;
+    const target = users.find(u => u.id === deleteId);
+    if (target && isProtectedAdmin(target.email)) {
+      showToast("error", "Action not allowed", "The default administrator account cannot be deleted.");
+      setDeleteId(null);
+      return;
+    }
     try {
       await deleteUser(deleteId);
       showToast("success", "User deleted", "The user account has been removed.");
@@ -196,7 +203,13 @@ export default function UsersPage() {
                             className="btn-icon"
                             title="Edit"
                             id={`edit-user-${user.id}`}
-                            onClick={() => navigate(`/users/${user.id}/edit`)}
+                            onClick={() => {
+                              if (isProtectedAdmin(user.email)) {
+                                showToast("error", "Action not allowed", "The default administrator account cannot be edited.");
+                                return;
+                              }
+                              navigate(`/users/${user.id}/edit`);
+                            }}
                           >
                             <Pencil size={16} />
                           </button>
@@ -204,7 +217,13 @@ export default function UsersPage() {
                             className="btn-icon danger"
                             title="Delete"
                             id={`delete-user-${user.id}`}
-                            onClick={() => setDeleteId(user.id)}
+                            onClick={() => {
+                              if (isProtectedAdmin(user.email)) {
+                                showToast("error", "Action not allowed", "The default administrator account cannot be deleted.");
+                                return;
+                              }
+                              setDeleteId(user.id);
+                            }}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -235,7 +254,14 @@ export default function UsersPage() {
           footer={
             <>
               <button className="btn btn-secondary" onClick={() => setViewUser(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => { setViewUser(null); navigate(`/users/${selectedUser.id}/edit`); }}>
+              <button className="btn btn-primary" onClick={() => {
+                if (isProtectedAdmin(selectedUser.email)) {
+                  showToast("error", "Action not allowed", "The default administrator account cannot be edited.");
+                  return;
+                }
+                setViewUser(null);
+                navigate(`/users/${selectedUser.id}/edit`);
+              }}>
                 <Pencil size={14} /> Edit User
               </button>
             </>

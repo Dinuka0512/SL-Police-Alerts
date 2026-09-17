@@ -11,7 +11,11 @@ export type LoginResult = {
 
 export class AuthService {
   login(email: string, password: string): Promise<LoginResult> {
-    return http.post<LoginResult>('/api/auth/login', { email, password });
+    return http.post<LoginResult>('/api/auth/login', {
+      email,
+      password,
+      app: 'mobile',
+    });
   }
 
   logout(refreshToken: string): Promise<{ message?: string }> {

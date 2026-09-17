@@ -66,13 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const session = readSession();
-    if (session) {
+    if (session && session.user.role === "Admin") {
       sessionRef.current = session;
       setUser(session.user);
       setToken(session.token);
       setStatus("authenticated");
       return;
     }
+    clearSession();
     setStatus("unauthenticated");
   }, []);
 

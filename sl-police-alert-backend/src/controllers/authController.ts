@@ -44,7 +44,7 @@ export const login = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, app } = req.body;
 
     if (!email || !password) {
       res.status(400).json({
@@ -78,6 +78,23 @@ export const login = async (
       res.status(403).json({
         success: false,
         message: "This account is inactive. Contact an administrator.",
+      });
+      return;
+    }
+
+    if (app === "admin" && user.role !== "Admin") {
+      res.status(403).json({
+        success: false,
+        message: "Only administrators can sign in to the admin panel.",
+      });
+      return;
+    }
+
+    if (app === "mobile" && user.role === "Admin") {
+      res.status(403).json({
+        success: false,
+        message:
+          "Administrators cannot use the mobile app. Please sign in to the admin panel.",
       });
       return;
     }

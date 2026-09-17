@@ -7,6 +7,8 @@ import { Department } from "../entities/Department";
 const userRepository = AppDataSource.getMongoRepository(User);
 const departmentRepository = AppDataSource.getMongoRepository(Department);
 
+const PROTECTED_ADMIN_EMAIL = "admin@police.lk";
+
 // CREATE
 export const createUser = async (
   req: Request,
@@ -183,6 +185,14 @@ export const updateUser = async (
       return;
     }
 
+    if (user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
+      res.status(403).json({
+        success: false,
+        message: "The default administrator account cannot be modified.",
+      });
+      return;
+    }
+
     const { name, police_id, department, email, password, contact, role, status, lastActive } = req.body;
 
     if (name !== undefined) user.name = name;
@@ -239,17 +249,31 @@ export const deleteUser = async (
       return;
     }
 
-    const result = await userRepository.deleteOne({
-      _id: new ObjectId(id),
+    const user = await userRepository.findOne({
+      where: {
+        _id: new ObjectId(id),
+      },
     });
 
-    if (result.deletedCount === 0) {
+    if (!user) {
       res.status(404).json({
         success: false,
         message: "User not found",
       });
       return;
     }
+
+    if (user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
+      res.status(403).json({
+        success: false,
+        message: "The default administrator account cannot be deleted.",
+      });
+      return;
+    }
+
+    await userRepository.deleteOne({
+      _id: new ObjectId(id),
+    });
 
     res.status(200).json({
       success: true,

@@ -11,7 +11,10 @@ export class AuthService {
   constructor(private readonly http: HttpClient) {}
 
   login(credentials: LoginCredentialsDTO): Promise<LoginResponseDTO> {
-    return this.http.post<LoginResponseDTO>("/api/auth/login", credentials);
+    return this.http.post<LoginResponseDTO>("/api/auth/login", {
+      ...credentials,
+      app: "admin",
+    });
   }
 
   refresh(refreshToken: string): Promise<RefreshTokensDTO> {
