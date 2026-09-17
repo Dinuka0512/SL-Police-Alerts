@@ -24,9 +24,11 @@ type PenaltyForm = {
   fee: string;
   vehicle: string;
   nic: string;
+  email: string;
   location: string;
-  date: string;
 };
+
+type PenaltyFilter = 'all' | 'paid' | 'notpaid';
 
 const EMPTY_FORM: PenaltyForm = {
   code: '',
@@ -34,12 +36,48 @@ const EMPTY_FORM: PenaltyForm = {
   fee: '',
   vehicle: '',
   nic: '',
+  email: '',
   location: '',
-  date: '',
 };
 
 const inputClassName =
   'rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 text-base mb-3';
+
+const FILTERS: { key: PenaltyFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'paid', label: 'Paid' },
+  { key: 'notpaid', label: 'Not Paid' },
+];
+
+function StatPill({
+  label,
+  value,
+  valueClass,
+  icon,
+  iconBg,
+  iconColor,
+}: {
+  label: string;
+  value: number;
+  valueClass: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  iconBg: string;
+  iconColor: string;
+}) {
+  return (
+    <View className="flex-1 bg-white rounded-2xl border border-slate-200 p-3">
+      <View
+        className={`h-9 w-9 rounded-full items-center justify-center ${iconBg}`}
+      >
+        <Ionicons name={icon} size={16} color={iconColor} />
+      </View>
+      <Text className={`text-xl font-extrabold mt-2 ${valueClass}`}>
+        {value}
+      </Text>
+      <Text className="text-[11px] text-slate-500 font-semibold">{label}</Text>
+    </View>
+  );
+}
 
 export default function PenaltiesScreen() {
   const router = useRouter();
@@ -51,6 +89,7 @@ export default function PenaltiesScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<PenaltyForm>(EMPTY_FORM);
+  const [filter, setFilter] = useState<PenaltyFilter>('all');
 
   useEffect(() => {
     if (!token) {
@@ -87,6 +126,18 @@ export default function PenaltiesScreen() {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  const paidCount = penalties.filter(
+    penalty => penalty.status === 'Paid',
+  ).length;
+  const notPaidCount = penalties.length - paidCount;
+  const filtered = penalties.filter(penalty =>
+    filter === 'all'
+      ? true
+      : filter === 'paid'
+        ? penalty.status === 'Paid'
+        : penalty.status === 'Not paid',
+  );
+
   const closeForm = () => {
     setShowForm(false);
     setForm(EMPTY_FORM);
@@ -109,8 +160,8 @@ export default function PenaltiesScreen() {
         fee,
         vehicle: form.vehicle.trim(),
         nic: form.nic.trim(),
+        email: form.email.trim(),
         location: form.location.trim(),
-        date: form.date.trim() || new Date().toISOString().slice(0, 10),
         status: 'Not paid',
         issuedBy: user?.name ?? '',
       });
@@ -136,54 +187,148 @@ export default function PenaltiesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="px-4">
+          <View className="flex-row gap-3 mb-4">
+            <StatPill
+              label="Total Penalties"
+              value={penalties.length}
+              valueClass="text-slate-900"
+              icon="receipt-outline"
+              iconBg="bg-police-navy"
+              iconColor="#FFFFFF"
+            />
+            <StatPill
+              label="Paid"
+              value={paidCount}
+              valueClass="text-emerald-600"
+              icon="checkmark-circle-outline"
+              iconBg="bg-emerald-100"
+              iconColor="#059669"
+            />
+            <StatPill
+              label="Not Paid"
+              value={notPaidCount}
+              valueClass="text-red-600"
+              icon="close-circle-outline"
+              iconBg="bg-red-100"
+              iconColor="#DC2626"
+            />
+          </View>
+
+          <View className="flex-row bg-slate-200 p-1 rounded-xl mb-4">
+            {FILTERS.map(item => {
+              const isActive = filter === item.key;
+              return (
+                <Pressable
+                  key={item.key}
+                  onPress={() => setFilter(item.key)}
+                  className={`flex-1 rounded-lg py-2 items-center ${
+                    isActive ? 'bg-white shadow-sm' : ''
+                  }`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActive }}
+                >
+                  <Text
+                    className={`text-sm ${
+                      isActive
+                        ? 'text-police-navy font-bold'
+                        : 'text-slate-500 font-semibold'
+                    }`}
+                  >
+                    {item.label} (
+                    {item.key === 'all'
+                      ? penalties.length
+                      : item.key === 'paid'
+                        ? paidCount
+                        : notPaidCount}
+                    )
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <Text className="text-slate-900 text-base font-bold mb-2">
-            Issued Penalties ({penalties.length})
+            Issued Penalties ({filtered.length})
           </Text>
 
           {isLoading && <ActivityIndicator className="py-8" color="#1D4ED8" />}
           {!isLoading && error && (
             <Text className="text-red-600 text-sm text-center py-8">{error}</Text>
           )}
-          {!isLoading && !error && penalties.length === 0 && (
+          {!isLoading && !error && filtered.length === 0 && (
             <Text className="text-slate-400 text-sm text-center py-8">
-              No penalties yet.
+              {penalties.length === 0
+                ? 'No penalties yet.'
+                : filter === 'paid'
+                  ? 'No paid penalties yet.'
+                  : 'No unpaid penalties yet.'}
             </Text>
           )}
 
           <View className="bg-white rounded-2xl overflow-hidden">
-            {penalties.map((penalty, index) => (
-              <View
-                key={penalty.id}
-                className={`px-4 py-3.5 ${
-                  index > 0 ? 'border-t border-slate-100' : ''
-                }`}
-              >
-                <View className="flex-row items-center">
-                  <View className="h-10 w-10 rounded-full bg-red-50 items-center justify-center">
-                    <Ionicons name="receipt" size={18} color="#DC2626" />
+            {filtered.map((penalty, index) => {
+              const isPaid = penalty.status === 'Paid';
+              const statusColor = isPaid ? '#059669' : '#DC2626';
+              return (
+                <View
+                  key={penalty.id}
+                  className={`px-4 py-3.5 ${
+                    index > 0 ? 'border-t border-slate-100' : ''
+                  }`}
+                >
+                  <View className="flex-row items-center">
+                    <View
+                      className={`h-10 w-10 rounded-full items-center justify-center ${
+                        isPaid ? 'bg-emerald-50' : 'bg-red-50'
+                      }`}
+                    >
+                      <Ionicons
+                        name={isPaid ? 'checkmark-circle' : 'receipt'}
+                        size={18}
+                        color={statusColor}
+                      />
+                    </View>
+                    <View className="flex-1 ml-3">
+                      <Text className="text-slate-800 text-sm font-bold">
+                        {penalty.violation}
+                      </Text>
+                      <Text className="text-slate-400 text-xs">
+                        {penalty.code} • {penalty.date}
+                      </Text>
+                    </View>
+                    <View className="items-end ml-2">
+                      <Text
+                        className={`text-sm font-bold ${
+                          isPaid ? 'text-emerald-600' : 'text-red-600'
+                        }`}
+                      >
+                        {penalty.fee}
+                      </Text>
+                      <View
+                        className={`rounded-full px-2 py-0.5 mt-1 ${
+                          isPaid ? 'bg-emerald-100' : 'bg-red-100'
+                        }`}
+                      >
+                        <Text
+                          className={`text-[10px] font-bold ${
+                            isPaid ? 'text-emerald-700' : 'text-red-700'
+                          }`}
+                        >
+                          {penalty.status}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  <View className="flex-1 ml-3">
-                    <Text className="text-slate-800 text-sm font-bold">
-                      {penalty.violation}
+                  {(penalty.vehicle || penalty.nic || penalty.email || penalty.location) && (
+                    <Text className="text-slate-500 text-xs mt-1.5">
+                      {[penalty.vehicle, penalty.nic, penalty.email, penalty.location]
+                        .filter(Boolean)
+                        .join(' • ')}
                     </Text>
-                    <Text className="text-slate-400 text-xs">
-                      {penalty.code} • {penalty.date}
-                      {penalty.status ? ` • ${penalty.status}` : ''}
-                    </Text>
-                  </View>
-                  <Text className="text-red-600 text-sm font-bold">
-                    {penalty.fee}
-                  </Text>
+                  )}
                 </View>
-                {(penalty.vehicle || penalty.nic || penalty.location) && (
-                  <Text className="text-slate-500 text-xs mt-1.5">
-                    {[penalty.vehicle, penalty.nic, penalty.location]
-                      .filter(Boolean)
-                      .join(' • ')}
-                  </Text>
-                )}
-              </View>
-            ))}
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -320,13 +465,16 @@ export default function PenaltiesScreen() {
                 />
 
                 <Text className="text-slate-700 text-sm font-semibold mb-1.5">
-                  Date
+                  Email
                 </Text>
                 <TextInput
-                  value={form.date}
-                  onChangeText={text => setField('date', text)}
-                  placeholder="YYYY-MM-DD"
+                  value={form.email}
+                  onChangeText={text => setField('email', text)}
+                  placeholder="driver@example.com"
                   placeholderTextColor="#94A3B8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                   className={inputClassName}
                 />
 

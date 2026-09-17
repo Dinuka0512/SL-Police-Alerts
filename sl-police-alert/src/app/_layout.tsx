@@ -25,6 +25,7 @@ export default function RootLayout() {
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="messages" />
+        <Stack.Screen name="message/[id]" />
         <Stack.Screen name="contacts" />
         <Stack.Screen name="penalties" />
         <Stack.Screen name="account" />

@@ -124,7 +124,7 @@ export const getMessageById = async (
 
     const message = await messageRepository.findOne({
       where: {
-        m_id: new ObjectId(id),
+        _id: new ObjectId(id),
       },
     });
 
@@ -174,7 +174,7 @@ export const updateMessage = async (
 
     const message = await messageRepository.findOne({
       where: {
-        m_id: new ObjectId(id),
+        _id: new ObjectId(id),
       },
     });
 
@@ -288,7 +288,7 @@ export const deleteMessage = async (
 
     const message = await messageRepository.findOne({
       where: {
-        m_id: new ObjectId(id),
+        _id: new ObjectId(id),
       },
     });
 
@@ -303,7 +303,7 @@ export const deleteMessage = async (
     await deleteImageFromCloudinary(message.image);
 
     const result = await messageRepository.deleteOne({
-      m_id: new ObjectId(id),
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {

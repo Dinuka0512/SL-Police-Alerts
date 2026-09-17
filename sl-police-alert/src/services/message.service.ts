@@ -36,13 +36,24 @@ function toMessage(dto: MessageDTO): Message {
 }
 
 export class MessageService {
+  private cache: Message[] | null = null;
+
   async findAll(): Promise<Message[]> {
     const dtos = await http.get<MessageDTO[]>('/api/messages');
-    return dtos.map(toMessage);
+    const messages = dtos.map(toMessage);
+    this.cache = messages;
+    return messages;
   }
 
   async findById(id: string): Promise<Message> {
-    const dto = await http.get<MessageDTO>(`/api/messages/${id}`);
-    return toMessage(dto);
+    const cached = this.cache?.find(message => message.id === id);
+    if (cached) return cached;
+
+    const messages = await this.findAll();
+    const found = messages.find(message => message.id === id);
+    if (!found) {
+      throw new Error('Message not found');
+    }
+    return found;
   }
 }

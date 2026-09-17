@@ -54,8 +54,10 @@ export const login = async (
       return;
     }
 
+    const normalizedEmail = String(email ?? "").trim().toLowerCase();
+
     const user = await userRepository.findOne({
-      where: { email: String(email).toLowerCase().trim() },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -94,7 +96,7 @@ export const login = async (
       res.status(403).json({
         success: false,
         message:
-          "Administrators cannot use the mobile app. Please sign in to the admin panel.",
+          "User don't have access to the mobile app. Please sign in to the admin panel.",
       });
       return;
     }

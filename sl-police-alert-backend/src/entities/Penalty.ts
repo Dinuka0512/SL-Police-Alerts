@@ -27,6 +27,9 @@ export class Penalty {
   nic!: string;
 
   @Column({ default: "" })
+  email!: string;
+
+  @Column({ default: "" })
   location!: string;
 
   @Column()

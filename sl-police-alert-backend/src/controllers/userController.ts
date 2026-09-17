@@ -25,9 +25,16 @@ export const createUser = async (
       return;
     }
 
+    const normalizedEmail = String(email).toLowerCase().trim();
+
     const existingUser = await userRepository.findOne({
       where: {
-        email,
+        email: {
+          $regex: new RegExp(
+            `^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+            "i"
+          ),
+        },
       },
     });
 
@@ -57,7 +64,7 @@ export const createUser = async (
       name,
       police_id,
       department,
-      email,
+      email: String(email).toLowerCase().trim(),
       password,
       contact,
       role: role ?? "Police Officer",
@@ -201,7 +208,7 @@ export const updateUser = async (
 
     if (department !== undefined) user.department = department;
 
-    if (email !== undefined) user.email = email;
+    if (email !== undefined) user.email = String(email).toLowerCase().trim();
 
     if (password !== undefined) user.password = password;
 

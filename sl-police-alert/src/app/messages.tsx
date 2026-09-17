@@ -1,10 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
-import { timeAgo } from '@/lib/format';
+import { timeAgo, truncateWords } from '@/lib/format';
 import { messageService } from '@/services';
 import { useAuth } from '@/store/auth';
 import type { Message } from '@/types';
@@ -15,6 +23,7 @@ type MessageItem = {
   body: string;
   station: string;
   time: string;
+  image: string;
 };
 
 function toMessage(message: Message): MessageItem {
@@ -24,6 +33,7 @@ function toMessage(message: Message): MessageItem {
     body: message.content,
     station: message.sentBy || 'Sri Lanka Police',
     time: timeAgo(message.date, message.time),
+    image: message.image,
   };
 }
 
@@ -87,23 +97,53 @@ export default function MessagesScreen() {
             </Text>
           )}
           {messages.map(message => (
-            <View
+            <Pressable
               key={message.id}
-              className="bg-white rounded-2xl border border-slate-200 p-4 mb-3"
+              onPress={() =>
+                router.push({
+                  pathname: '/message/[id]',
+                  params: { id: message.id },
+                })
+              }
+              className="bg-white rounded-2xl border border-slate-200 p-3 mb-3 flex-row"
+              accessibilityRole="button"
+              accessibilityLabel={`Open message ${message.title}`}
             >
-              <Text className="text-slate-900 font-bold text-base mb-1">
-                {message.title}
-              </Text>
-              <Text className="text-slate-500 text-sm leading-5">
-                {message.body}
-              </Text>
-              <View className="flex-row items-center justify-between mt-3">
-                <Text className="text-police-primary text-xs font-semibold">
-                  {message.station}
-                </Text>
-                <Text className="text-slate-400 text-[11px]">{message.time}</Text>
+              <View className="w-20 h-20 rounded-xl bg-slate-100 overflow-hidden items-center justify-center">
+                {message.image ? (
+                  <Image
+                    source={{ uri: message.image }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="megaphone-outline" size={24} color="#94A3B8" />
+                )}
               </View>
-            </View>
+              <View className="flex-1 ml-3">
+                <Text
+                  className="text-slate-900 font-bold text-sm leading-5"
+                  numberOfLines={1}
+                >
+                  {truncateWords(message.title, 3)}
+                </Text>
+                <Text
+                  className="text-slate-500 text-xs leading-4 mt-1"
+                  numberOfLines={3}
+                >
+                  {message.body}
+                </Text>
+                <View className="flex-row items-center justify-between mt-2">
+                  <Text
+                    className="text-police-primary text-[11px] font-semibold flex-1 mr-2"
+                    numberOfLines={1}
+                  >
+                    {message.station}
+                  </Text>
+                  <Text className="text-slate-400 text-[10px]">{message.time}</Text>
+                </View>
+              </View>
+            </Pressable>
           ))}
         </View>
       </ScrollView>

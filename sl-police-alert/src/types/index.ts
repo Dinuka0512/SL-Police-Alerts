@@ -21,6 +21,7 @@ export interface Penalty {
   fee: string;
   vehicle: string;
   nic: string;
+  email: string;
   location: string;
   date: string;
   status: PenaltyStatus;
@@ -28,7 +29,9 @@ export interface Penalty {
   createdAt: string;
 }
 
-export type CreatePenaltyInput = Omit<Penalty, 'id' | 'createdAt'>;
+export type CreatePenaltyInput = Omit<Penalty, 'id' | 'createdAt' | 'date'> & {
+  date?: string;
+};
 
 export interface EmergencyContact {
   id: string;
@@ -36,4 +39,13 @@ export interface EmergencyContact {
   title: string;
   contact: string;
   description: string;
+}
+
+export interface HiruNews {
+  id: string;
+  title: string;
+  story: string;
+  date: string;
+  image: string;
+  url: string;
 }

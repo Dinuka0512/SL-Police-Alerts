@@ -80,7 +80,7 @@ export const getDepartmentById = async (
 
     const department = await departmentRepository.findOne({
       where: {
-        d_id: new MongoObjectId(id),
+        _id: new MongoObjectId(id),
       },
     });
 
@@ -112,7 +112,7 @@ export const updateDepartment = async (
 
     const department = await departmentRepository.findOne({
       where: {
-        d_id: new MongoObjectId(id),
+        _id: new MongoObjectId(id),
       },
     });
 
@@ -148,7 +148,7 @@ export const deleteDepartment = async (
     }
 
     const result = await departmentRepository.deleteOne({
-      d_id: new MongoObjectId(id),
+      _id: new MongoObjectId(id),
     });
 
     if (result.deletedCount === 0) {

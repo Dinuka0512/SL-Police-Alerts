@@ -9,6 +9,7 @@ type PenaltyDTO = {
   fee: string;
   vehicle?: string;
   nic?: string;
+  email?: string;
   location?: string;
   date?: string;
   status?: string;
@@ -24,6 +25,7 @@ function toPenalty(dto: PenaltyDTO): Penalty {
     fee: dto.fee,
     vehicle: dto.vehicle ?? '',
     nic: dto.nic ?? '',
+    email: dto.email ?? '',
     location: dto.location ?? '',
     date: dto.date ?? '',
     status: (dto.status === 'Paid' ? 'Paid' : 'Not paid') as PenaltyStatus,

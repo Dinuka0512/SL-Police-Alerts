@@ -16,7 +16,7 @@ export const createPenalty = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { code, violation, fee, vehicle, nic, location, date, status, issuedBy } =
+    const { code, violation, fee, vehicle, nic, email, location, date, status, issuedBy } =
       req.body;
 
     if (!violation || !fee) {
@@ -33,6 +33,7 @@ export const createPenalty = async (
       fee,
       vehicle: vehicle ?? "",
       nic: nic ?? "",
+      email: email ?? "",
       location: location ?? "",
       date: date ?? new Date().toISOString().slice(0, 10),
       status: status ?? "Not paid",
@@ -105,6 +106,7 @@ export const searchPenalties = async (
           { violation: { $regex: regex } },
           { vehicle: { $regex: regex } },
           { nic: { $regex: regex } },
+          { email: { $regex: regex } },
           { location: { $regex: regex } },
           { issuedBy: { $regex: regex } },
         ],
@@ -198,7 +200,7 @@ export const updatePenalty = async (
       return;
     }
 
-    const { code, violation, fee, vehicle, nic, location, date, status, issuedBy } =
+    const { code, violation, fee, vehicle, nic, email, location, date, status, issuedBy } =
       req.body;
 
     if (code !== undefined) penalty.code = code;
@@ -206,6 +208,7 @@ export const updatePenalty = async (
     if (fee !== undefined) penalty.fee = fee;
     if (vehicle !== undefined) penalty.vehicle = vehicle;
     if (nic !== undefined) penalty.nic = nic;
+    if (email !== undefined) penalty.email = email;
     if (location !== undefined) penalty.location = location;
     if (date !== undefined) penalty.date = date;
     if (status !== undefined) penalty.status = status;

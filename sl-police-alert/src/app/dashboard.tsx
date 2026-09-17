@@ -1,8 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 
 import { AlertCard, AlertItem } from '@/components/alert-card';
+import { DashboardStats } from '@/components/dashboard-stats';
+import { NewsSlider } from '@/components/news-slider';
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
 import { timeAgo } from '@/lib/format';
@@ -27,7 +37,27 @@ export default function DashboardScreen() {
 
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setRefreshKey(key => key + 1);
+    try {
+      const messages = await messageService.findAll();
+      setAlerts(messages.map(toAlert));
+      setError(null);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Invalid or expired token') {
+        router.replace('/login');
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Failed to load alerts');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -83,22 +113,19 @@ export default function DashboardScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#1D4ED8"
+            colors={['#1D4ED8']}
+          />
+        }
       >
-        <View className="px-4">
-          <View className="bg-red-600 rounded-2xl p-4 flex-row items-center justify-between">
-            <View>
-              <Text className="text-white/90 text-[11px] font-semibold uppercase tracking-widest">
-                Emergency
-              </Text>
-              <Text className="text-white text-3xl font-extrabold">119</Text>
-            </View>
-            <Pressable
-              className="bg-white rounded-full px-6 py-2.5"
-              accessibilityRole="button"
-            >
-              <Text className="text-red-600 font-bold">Call</Text>
-            </Pressable>
-          </View>
+        <NewsSlider refreshKey={refreshKey} />
+
+        <View className="px-4 mt-6">
+          <DashboardStats alertCount={alerts.length} refreshKey={refreshKey} />
         </View>
 
         <View className="px-4 mt-6">

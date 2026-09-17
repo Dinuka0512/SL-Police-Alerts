@@ -91,7 +91,7 @@ export const getEmergancyContactById = async (
 
     const contact = await emergancyContactRepository.findOne({
       where: {
-        emgCon_id: new ObjectId(id),
+        _id: new ObjectId(id),
       },
     });
 
@@ -138,7 +138,7 @@ export const updateEmergancyContact = async (
 
     const contactData = await emergancyContactRepository.findOne({
       where: {
-        emgCon_id: new ObjectId(id),
+        _id: new ObjectId(id),
       },
     });
 
@@ -206,7 +206,7 @@ export const deleteEmergancyContact = async (
     }
 
     const result = await emergancyContactRepository.deleteOne({
-      emgCon_id: new ObjectId(id),
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
