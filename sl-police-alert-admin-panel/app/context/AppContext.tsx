@@ -6,6 +6,7 @@ import React, {
   useEffect,
 } from "react";
 
+import { useAuth } from "~/context/AuthContext";
 import { departmentService, userService, messageService, penaltyService } from "~/services";
 
 import {
@@ -93,6 +94,7 @@ function toDeptIdMap(depts: Department[]): Map<string, string> {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useAuth();
   const [rawDepts, setRawDepts] = useState<Department[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -101,6 +103,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+
     let cancelled = false;
 
     async function loadAll() {
@@ -145,7 +149,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [status]);
 
   // Compute departments with live user counts
   const departments = computeUserCounts(rawDepts, users);
