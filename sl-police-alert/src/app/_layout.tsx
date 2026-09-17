@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LoadingScreen } from '@/components/loading-screen';
 
@@ -17,7 +18,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -26,11 +27,11 @@ export default function RootLayout() {
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="messages" />
         <Stack.Screen name="message/[id]" />
-        <Stack.Screen name="contacts" />
+        <Stack.Screen name="accidents" />
         <Stack.Screen name="penalties" />
         <Stack.Screen name="account" />
       </Stack>
       {isLoading && <LoadingScreen onFinish={() => setIsLoading(false)} />}
-    </>
+    </GestureHandlerRootView>
   );
 }

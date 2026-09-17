@@ -7,7 +7,7 @@ type TabKey =
   | 'dashboard'
   | 'messages'
   | 'account'
-  | 'contacts'
+  | 'accidents'
   | 'penalties';
 
 const TABS: {
@@ -18,10 +18,10 @@ const TABS: {
 }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline', activeIcon: 'home' },
   {
-    key: 'contacts',
-    label: 'Contacts',
-    icon: 'people-outline',
-    activeIcon: 'people',
+    key: 'accidents',
+    label: 'Accidents',
+    icon: 'map-outline',
+    activeIcon: 'map',
   },
   {
     key: 'penalties',

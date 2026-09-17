@@ -1,5 +1,6 @@
 export type AlertPriority = 'High' | 'Medium' | 'Low';
 export type PenaltyStatus = 'Not paid' | 'Paid';
+export type RiskLevel = 'High' | 'Medium' | 'Low';
 
 export interface Message {
   id: string;
@@ -40,6 +41,18 @@ export interface EmergencyContact {
   contact: string;
   description: string;
 }
+
+export type DistrictShape = {
+  name: string;
+  label: [number, number];
+  rings: [number, number][][];
+};
+
+export type DistrictPrediction = {
+  name: string;
+  risk: RiskLevel;
+  count: number;
+};
 
 export interface HiruNews {
   id: string;
