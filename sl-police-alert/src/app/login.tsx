@@ -1,0 +1,149 @@
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const PAGE = require('@/assets/images/police.png');
+
+export default function LoginScreen() {
+  const router = useRouter();
+
+  const [policeId, setPoliceId] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = () => {
+    setIsSubmitting(true);
+    // TODO: Replace with a real auth call to the backend
+    // (POST /auth/login on the Express API) once it exists.
+    setTimeout(() => {
+      setIsSubmitting(false);
+      router.replace('/dashboard');
+    }, 600);
+  };
+
+  return (
+    <View className="flex-1 bg-police-navy">
+      <SafeAreaView className="flex-1">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1"
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="flex-1 px-6 justify-center pb-10">
+              <View className="items-center mb-10">
+                <View className="h-24 w-24 rounded-full bg-white items-center justify-center shadow-lg">
+                  <Image
+                    source={PAGE}
+                    className="h-20 w-20"
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text className="mt-5 text-white text-2xl font-bold tracking-wide">
+                  SL Police Alert
+                </Text>
+                <Text className="mt-1 text-blue-200 text-sm">
+                  Sri Lanka Police • Secure Sign In
+                </Text>
+              </View>
+
+              <View className="bg-white rounded-3xl p-6 shadow-xl">
+                <Text className="text-slate-900 text-xl font-bold mb-1">
+                  Welcome back
+                </Text>
+                <Text className="text-slate-500 text-sm mb-6">
+                  Sign in to view alerts and report incidents.
+                </Text>
+
+                <Text className="text-slate-700 text-sm font-semibold mb-1.5">
+                  Police ID
+                </Text>
+                <TextInput
+                  value={policeId}
+                  onChangeText={setPoliceId}
+                  placeholder="Enter your Police ID"
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 text-base"
+                />
+
+                <View className="mt-4">
+                  <Text className="text-slate-700 text-sm font-semibold mb-1.5">
+                    Password
+                  </Text>
+                  <View className="flex-row items-center rounded-xl border border-slate-200 bg-slate-50">
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Enter your password"
+                      placeholderTextColor="#94A3B8"
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      className="flex-1 px-4 py-3 text-slate-900 text-base"
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(prev => !prev)}
+                      className="pr-4"
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showPassword ? 'Hide password' : 'Show password'
+                      }
+                    >
+                      <Text className="text-police-primary font-semibold text-sm">
+                        {showPassword ? 'Hide' : 'Show'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View className="items-end mt-2">
+                  <Pressable
+                    onPress={() => router.push('/forgot-password')}
+                    accessibilityRole="button"
+                  >
+                    <Text className="text-police-primary font-semibold text-sm">
+                      Forgot password?
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <Pressable
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                  className={`rounded-xl py-4 items-center mt-2 shadow-sm ${
+                    isSubmitting ? 'bg-police-blue opacity-70' : 'bg-police-primary'
+                  }`}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign in"
+                >
+                  <Text className="text-white font-bold text-base">
+                    {isSubmitting ? 'Signing in…' : 'Sign In'}
+                  </Text>
+                </Pressable>
+
+                <Text className="mt-4 text-center text-xs text-slate-400">
+                  By signing in you agree to the Terms & Privacy Policy.
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
+  );
+}

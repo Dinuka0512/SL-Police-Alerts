@@ -9,6 +9,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "class-validator": "^0.15.1",
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
     "express": "^5.0.0",
