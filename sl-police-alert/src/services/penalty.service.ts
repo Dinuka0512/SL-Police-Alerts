@@ -1,4 +1,5 @@
 import { http } from '@/lib/api';
+import { getAuthState } from '@/store/auth';
 
 import type { CreatePenaltyInput, Penalty, PenaltyStatus } from '@/types';
 
@@ -37,7 +38,12 @@ function toPenalty(dto: PenaltyDTO): Penalty {
 export class PenaltyService {
   async findAll(): Promise<Penalty[]> {
     const dtos = await http.get<PenaltyDTO[]>('/api/penalties');
-    return dtos.map(toPenalty);
+    const name = getAuthState().user?.name ?? '';
+    const mine = dtos.filter(dto => {
+      if (!name || !dto.issuedBy) return false;
+      return dto.issuedBy === name;
+    });
+    return mine.map(toPenalty);
   }
 
   async create(input: CreatePenaltyInput): Promise<Penalty> {
