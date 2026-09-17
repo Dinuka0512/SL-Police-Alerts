@@ -1,9 +1,15 @@
-import { ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/screen-header';
 import { TabBar } from '@/components/tab-bar';
+import { timeAgo } from '@/lib/format';
+import { messageService } from '@/services';
+import { useAuth } from '@/store/auth';
+import type { Message } from '@/types';
 
-type Message = {
+type MessageItem = {
   id: string;
   title: string;
   body: string;
@@ -11,31 +17,53 @@ type Message = {
   time: string;
 };
 
-const MESSAGES: Message[] = [
-  {
-    id: '1',
-    title: 'Emergency Response Drill',
-    body: 'All units to report to the Colombo HQ parade ground for the quarterly emergency response drill.',
-    station: 'Colombo HQ',
-    time: '30 min ago',
-  },
-  {
-    id: '2',
-    title: 'Traffic Police Reassignment',
-    body: 'Officers on Galle Road are reassigned to the Bambaplaina junction for crowd control duties today.',
-    station: 'Colombo South',
-    time: '2 hrs ago',
-  },
-  {
-    id: '3',
-    title: 'Missing Person Bulletin',
-    body: 'Please circulate the missing person bulletin for a 34-year-old man last seen in Kaduwela.',
-    station: 'Kaduwela PS',
-    time: '5 hrs ago',
-  },
-];
+function toMessage(message: Message): MessageItem {
+  return {
+    id: message.id,
+    title: message.title,
+    body: message.content,
+    station: message.sentBy || 'Sri Lanka Police',
+    time: timeAgo(message.date, message.time),
+  };
+}
 
 export default function MessagesScreen() {
+  const router = useRouter();
+  const { token } = useAuth();
+
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await messageService.findAll();
+        if (!cancelled) setMessages(data.map(toMessage));
+      } catch (err) {
+        if (err instanceof Error && err.message === 'Invalid or expired token') {
+          router.replace('/login');
+          return;
+        }
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load messages');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, router]);
+
   return (
     <View className="flex-1 bg-slate-100">
       <ScreenHeader
@@ -49,7 +77,16 @@ export default function MessagesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="px-4">
-          {MESSAGES.map(message => (
+          {isLoading && <ActivityIndicator className="py-8" color="#1D4ED8" />}
+          {!isLoading && error && (
+            <Text className="text-red-600 text-sm text-center py-8">{error}</Text>
+          )}
+          {!isLoading && !error && messages.length === 0 && (
+            <Text className="text-slate-400 text-sm text-center py-8">
+              No messages yet.
+            </Text>
+          )}
+          {messages.map(message => (
             <View
               key={message.id}
               className="bg-white rounded-2xl border border-slate-200 p-4 mb-3"

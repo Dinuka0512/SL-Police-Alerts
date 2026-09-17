@@ -7,13 +7,15 @@ import { Department } from "../entities/Department";
 const userRepository = AppDataSource.getMongoRepository(User);
 const departmentRepository = AppDataSource.getMongoRepository(Department);
 
+const PROTECTED_ADMIN_EMAIL = "admin@police.lk";
+
 // CREATE
 export const createUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { name, police_id, department, email, password, contact } = req.body;
+    const { name, police_id, department, email, password, contact, role, status } = req.body;
 
     if (!name || !police_id || !department || !email || !password || !contact) {
       res.status(400).json({
@@ -58,6 +60,10 @@ export const createUser = async (
       email,
       password,
       contact,
+      role: role ?? "Police Officer",
+      status: status ?? "Active",
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
     });
 
     const savedUser = await userRepository.save(user);
@@ -179,7 +185,15 @@ export const updateUser = async (
       return;
     }
 
-    const { name, police_id, department, email, password, contact } = req.body;
+    if (user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
+      res.status(403).json({
+        success: false,
+        message: "The default administrator account cannot be modified.",
+      });
+      return;
+    }
+
+    const { name, police_id, department, email, password, contact, role, status, lastActive } = req.body;
 
     if (name !== undefined) user.name = name;
 
@@ -192,6 +206,12 @@ export const updateUser = async (
     if (password !== undefined) user.password = password;
 
     if (contact !== undefined) user.contact = contact;
+
+    if (role !== undefined) user.role = role;
+
+    if (status !== undefined) user.status = status;
+
+    if (lastActive !== undefined) user.lastActive = lastActive;
 
     const updatedUser = await userRepository.save(user);
 
@@ -229,17 +249,31 @@ export const deleteUser = async (
       return;
     }
 
-    const result = await userRepository.deleteOne({
-      _id: new ObjectId(id),
+    const user = await userRepository.findOne({
+      where: {
+        _id: new ObjectId(id),
+      },
     });
 
-    if (result.deletedCount === 0) {
+    if (!user) {
       res.status(404).json({
         success: false,
         message: "User not found",
       });
       return;
     }
+
+    if (user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL) {
+      res.status(403).json({
+        success: false,
+        message: "The default administrator account cannot be deleted.",
+      });
+      return;
+    }
+
+    await userRepository.deleteOne({
+      _id: new ObjectId(id),
+    });
 
     res.status(200).json({
       success: true,

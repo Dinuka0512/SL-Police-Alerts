@@ -29,4 +29,15 @@ export class User {
   @Column()
   contact!: string;
 
+  @Column({ default: "Police Officer" })
+  role!: string;
+
+  @Column({ default: "Active" })
+  status!: string;
+
+  @Column({ default: "" })
+  createdAt!: string;
+
+  @Column({ default: "" })
+  lastActive!: string;
 }

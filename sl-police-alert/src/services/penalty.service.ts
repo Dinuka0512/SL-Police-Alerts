@@ -1,0 +1,45 @@
+import { http } from '@/lib/api';
+
+import type { CreatePenaltyInput, Penalty, PenaltyStatus } from '@/types';
+
+type PenaltyDTO = {
+  p_id: string;
+  code?: string;
+  violation: string;
+  fee: string;
+  vehicle?: string;
+  nic?: string;
+  location?: string;
+  date?: string;
+  status?: string;
+  issuedBy?: string;
+  createdAt?: string;
+};
+
+function toPenalty(dto: PenaltyDTO): Penalty {
+  return {
+    id: String(dto.p_id),
+    code: dto.code ?? '',
+    violation: dto.violation,
+    fee: dto.fee,
+    vehicle: dto.vehicle ?? '',
+    nic: dto.nic ?? '',
+    location: dto.location ?? '',
+    date: dto.date ?? '',
+    status: (dto.status === 'Paid' ? 'Paid' : 'Not paid') as PenaltyStatus,
+    issuedBy: dto.issuedBy ?? '',
+    createdAt: dto.createdAt ?? '',
+  };
+}
+
+export class PenaltyService {
+  async findAll(): Promise<Penalty[]> {
+    const dtos = await http.get<PenaltyDTO[]>('/api/penalties');
+    return dtos.map(toPenalty);
+  }
+
+  async create(input: CreatePenaltyInput): Promise<Penalty> {
+    const dto = await http.post<PenaltyDTO>('/api/penalties', input);
+    return toPenalty(dto);
+  }
+}

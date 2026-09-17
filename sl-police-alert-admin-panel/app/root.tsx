@@ -85,6 +85,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { AuthProvider } from "./context/AuthContext";
 import { AppProvider } from "./context/AppContext";
 import { ToastProvider } from "./context/ToastContext";
 
@@ -121,11 +122,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AppProvider>
-      <ToastProvider>
-        <Outlet />
-      </ToastProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <ToastProvider>
+          <Outlet />
+        </ToastProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 

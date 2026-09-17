@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 
 import { AppDataSource } from "../config/data-source";
 import { Message } from "../entities/Message";
+import { uploadImageToCloudinary, deleteImageFromCloudinary } from "../utils/uploadImage";
 
 const messageRepository = AppDataSource.getMongoRepository(Message);
 
@@ -18,22 +19,43 @@ export const createMessage = async (
       content,
       date,
       time,
+      priority,
+      status,
+      sentBy,
+      departments,
     } = req.body;
 
-    if (!image || !title || !content || !date || !time) {
+    if (!title || !content) {
       res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Title and content are required",
       });
       return;
     }
 
+    let savedImage = (image ?? "") as string;
+    if (savedImage && savedImage.startsWith("data:")) {
+      try {
+        savedImage = await uploadImageToCloudinary(savedImage);
+      } catch {
+        res.status(500).json({
+          success: false,
+          message: "Failed to upload image to Cloudinary",
+        });
+        return;
+      }
+    }
+
     const message = messageRepository.create({
-      image,
+      image: savedImage,
       title,
       content,
-      date: new Date(date),
-      time,
+      date: date ? new Date(date) : new Date(),
+      time: time ?? new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      priority: priority ?? "Medium",
+      status: status ?? "Sent",
+      sentBy: sentBy ?? "",
+      departments: departments ?? [],
     });
 
     const savedMessage = await messageRepository.save(message);
@@ -170,10 +192,26 @@ export const updateMessage = async (
       content,
       date,
       time,
+      priority,
+      status,
+      sentBy,
+      departments,
     } = req.body;
 
     if (image !== undefined) {
-      message.image = image;
+      if (image.startsWith("data:")) {
+        try {
+          message.image = await uploadImageToCloudinary(image);
+        } catch {
+          res.status(500).json({
+            success: false,
+            message: "Failed to upload image to Cloudinary",
+          });
+          return;
+        }
+      } else {
+        message.image = image;
+      }
     }
 
     if (title !== undefined) {
@@ -190,6 +228,22 @@ export const updateMessage = async (
 
     if (time !== undefined) {
       message.time = time;
+    }
+
+    if (priority !== undefined) {
+      message.priority = priority;
+    }
+
+    if (status !== undefined) {
+      message.status = status;
+    }
+
+    if (sentBy !== undefined) {
+      message.sentBy = sentBy;
+    }
+
+    if (departments !== undefined) {
+      message.departments = departments;
     }
 
     const updatedMessage =
@@ -231,6 +285,22 @@ export const deleteMessage = async (
       });
       return;
     }
+
+    const message = await messageRepository.findOne({
+      where: {
+        m_id: new ObjectId(id),
+      },
+    });
+
+    if (!message) {
+      res.status(404).json({
+        success: false,
+        message: "Message not found",
+      });
+      return;
+    }
+
+    await deleteImageFromCloudinary(message.image);
 
     const result = await messageRepository.deleteOne({
       m_id: new ObjectId(id),

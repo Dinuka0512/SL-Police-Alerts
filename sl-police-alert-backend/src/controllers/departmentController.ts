@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { ObjectId } from "mongodb";
+import { ObjectId, ObjectId as MongoObjectId } from "mongodb";
 
 import { AppDataSource } from "../config/data-source";
 
@@ -8,12 +8,23 @@ import { Department } from "../entities/Department";
 
 const departmentRepository = AppDataSource.getMongoRepository(Department);
 
+type IdParam = string | string[];
+
+function normalizeId(paramId: string | string[]): string {
+  return Array.isArray(paramId) ? paramId[0] : paramId;
+}
+
 export const createDepartment = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { name } = req.body;
+    const { name, code, description, status } = req.body;
+
+    if (!name) {
+      res.status(400).json({ message: "Department name is required" });
+      return;
+    }
 
     const existingDepartment = await departmentRepository.findOne({
       where: {
@@ -26,7 +37,13 @@ export const createDepartment = async (
       return;
     }
 
-    const department = departmentRepository.create({ name });
+    const department = departmentRepository.create({
+      name,
+      code: code ?? "",
+      description: description ?? "",
+      status: status ?? "Active",
+      createdAt: new Date().toISOString(),
+    });
     await departmentRepository.save(department);
 
     res.status(201).json(department);
@@ -54,10 +71,16 @@ export const getDepartmentById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = normalizeId(req.params.id as IdParam);
+
+    if (!id || !ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid department ID" });
+      return;
+    }
+
     const department = await departmentRepository.findOne({
       where: {
-        d_id: id,
+        d_id: new MongoObjectId(id),
       },
     });
 
@@ -78,12 +101,18 @@ export const updateDepartment = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-    const { name } = req.body;
+    const id = normalizeId(req.params.id as IdParam);
+
+    if (!id || !ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid department ID" });
+      return;
+    }
+
+    const { name, code, description, status } = req.body;
 
     const department = await departmentRepository.findOne({
       where: {
-        d_id: id,
+        d_id: new MongoObjectId(id),
       },
     });
 
@@ -92,7 +121,11 @@ export const updateDepartment = async (
       return;
     }
 
-    department.name = name;
+    if (name !== undefined) department.name = name;
+    if (code !== undefined) department.code = code;
+    if (description !== undefined) department.description = description;
+    if (status !== undefined) department.status = status;
+
     await departmentRepository.save(department);
 
     res.status(200).json(department);
@@ -107,20 +140,22 @@ export const deleteDepartment = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = normalizeId(req.params.id as IdParam);
 
-    const department = await departmentRepository.findOne({
-      where: {
-        d_id: id,
-      },
+    if (!id || !ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid department ID" });
+      return;
+    }
+
+    const result = await departmentRepository.deleteOne({
+      d_id: new MongoObjectId(id),
     });
 
-    if (!department) {
+    if (result.deletedCount === 0) {
       res.status(404).json({ message: "Department not found" });
       return;
     }
 
-    await departmentRepository.remove(department);
     res.status(200).json({ message: "Department deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting department", error });

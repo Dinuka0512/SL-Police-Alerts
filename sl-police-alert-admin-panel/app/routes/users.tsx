@@ -6,17 +6,19 @@ import {
 } from "lucide-react";
 import { useApp } from "~/context/AppContext";
 import { useToast } from "~/context/ToastContext";
+import { isProtectedAdmin } from "~/lib/constants";
 import Badge, { statusToBadge, roleToBadge } from "~/components/ui/Badge";
 import SearchBar from "~/components/ui/SearchBar";
 import Pagination from "~/components/ui/Pagination";
 import ConfirmDialog from "~/components/ui/ConfirmDialog";
 import EmptyState from "~/components/ui/EmptyState";
+import OfflineState from "~/components/ui/OfflineState";
 import Modal from "~/components/ui/Modal";
 
 const PER_PAGE = 8;
 
 export default function UsersPage() {
-  const { users, departments, deleteUser, getDepartmentById } = useApp();
+  const { users, departments, connected, deleteUser, getDepartmentById } = useApp();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -44,11 +46,22 @@ export default function UsersPage() {
   const selectedUser = viewUser ? users.find(u => u.id === viewUser) : null;
   const deleteTargetUser = deleteId ? users.find(u => u.id === deleteId) : null;
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteId) return;
-    deleteUser(deleteId);
-    showToast("success", "User deleted", "The user account has been removed.");
-    setDeleteId(null);
+    const target = users.find(u => u.id === deleteId);
+    if (target && isProtectedAdmin(target.email)) {
+      showToast("error", "Action not allowed", "The default administrator account cannot be deleted.");
+      setDeleteId(null);
+      return;
+    }
+    try {
+      await deleteUser(deleteId);
+      showToast("success", "User deleted", "The user account has been removed.");
+    } catch (err) {
+      showToast("error", "Failed to delete user", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setDeleteId(null);
+    }
   }
 
   return (
@@ -117,7 +130,9 @@ export default function UsersPage() {
       {/* Table */}
       <div className="card">
         <div className="table-wrap">
-          {paged.length === 0 ? (
+          {!connected ? (
+            <OfflineState />
+          ) : paged.length === 0 ? (
             <EmptyState
               icon={<UsersIcon size={32} />}
               title="No users found"
@@ -129,7 +144,7 @@ export default function UsersPage() {
               }
             />
           ) : (
-            <table className="data-table">
+            <table className="data-table users-table">
               <thead>
                 <tr>
                   <th>#</th>
@@ -139,7 +154,6 @@ export default function UsersPage() {
                   <th>Department</th>
                   <th>Role</th>
                   <th>Status</th>
-                  <th className="hide-mobile">Created</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -148,13 +162,13 @@ export default function UsersPage() {
                   const dept = getDepartmentById(user.departmentId);
                   return (
                     <tr key={user.id}>
-                      <td style={{ color: "#94a3b8", fontSize: 12 }}>
+                      <td style={{ color: "#94a3b8" }}>
                         {(page - 1) * PER_PAGE + idx + 1}
                       </td>
                       <td>
                         <div className="flex items-center gap-3">
                           <div style={{
-                            width: 34, height: 34, borderRadius: "50%",
+                            width: 32, height: 32, borderRadius: "50%",
                             background: "linear-gradient(135deg, #1a3a6b, #0f2557)",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0
@@ -165,18 +179,16 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="hide-mobile" style={{ color: "#475569" }}>
-                        <div className="flex items-center gap-1"><Mail size={12} color="#94a3b8" />{user.email}</div>
+                        <div className="flex items-center gap-1"><Mail size={13} color="#94a3b8" />{user.email}</div>
                       </td>
                       <td className="hide-mobile">
-                        <div className="flex items-center gap-1" style={{ color: "#475569" }}><Phone size={12} color="#94a3b8" />{user.phone}</div>
+                        <div className="flex items-center gap-1" style={{ color: "#475569" }}><Phone size={13} color="#94a3b8" />{user.phone}</div>
                       </td>
                       <td>
-                        <span style={{ fontSize: 13, color: "#334155" }}>{dept?.name ?? "—"}</span>
-                        <div style={{ fontSize: 11, color: "#94a3b8" }}>{dept?.code}</div>
+                        <span style={{ color: "#334155" }}>{dept?.code ?? "—"}</span>
                       </td>
                       <td><Badge variant={roleToBadge(user.role)} /></td>
                       <td><Badge variant={statusToBadge(user.status)} /></td>
-                      <td className="hide-mobile" style={{ fontSize: 12, color: "#64748b" }}>{user.createdAt}</td>
                       <td>
                         <div className="flex items-center gap-1">
                           <button
@@ -185,23 +197,35 @@ export default function UsersPage() {
                             id={`view-user-${user.id}`}
                             onClick={() => setViewUser(user.id)}
                           >
-                            <Eye size={15} />
+                            <Eye size={16} />
                           </button>
                           <button
                             className="btn-icon"
                             title="Edit"
                             id={`edit-user-${user.id}`}
-                            onClick={() => navigate(`/users/${user.id}/edit`)}
+                            onClick={() => {
+                              if (isProtectedAdmin(user.email)) {
+                                showToast("error", "Action not allowed", "The default administrator account cannot be edited.");
+                                return;
+                              }
+                              navigate(`/users/${user.id}/edit`);
+                            }}
                           >
-                            <Pencil size={15} />
+                            <Pencil size={16} />
                           </button>
                           <button
                             className="btn-icon danger"
                             title="Delete"
                             id={`delete-user-${user.id}`}
-                            onClick={() => setDeleteId(user.id)}
+                            onClick={() => {
+                              if (isProtectedAdmin(user.email)) {
+                                showToast("error", "Action not allowed", "The default administrator account cannot be deleted.");
+                                return;
+                              }
+                              setDeleteId(user.id);
+                            }}
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -230,7 +254,14 @@ export default function UsersPage() {
           footer={
             <>
               <button className="btn btn-secondary" onClick={() => setViewUser(null)}>Close</button>
-              <button className="btn btn-primary" onClick={() => { setViewUser(null); navigate(`/users/${selectedUser.id}/edit`); }}>
+              <button className="btn btn-primary" onClick={() => {
+                if (isProtectedAdmin(selectedUser.email)) {
+                  showToast("error", "Action not allowed", "The default administrator account cannot be edited.");
+                  return;
+                }
+                setViewUser(null);
+                navigate(`/users/${selectedUser.id}/edit`);
+              }}>
                 <Pencil size={14} /> Edit User
               </button>
             </>

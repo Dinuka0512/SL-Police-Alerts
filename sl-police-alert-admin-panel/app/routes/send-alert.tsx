@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useApp } from "~/context/AppContext";
 import { useToast } from "~/context/ToastContext";
+import { useAuth } from "~/context/AuthContext";
 import type { AlertPriority, AlertDeptDelivery } from "~/context/AppContext";
 import ImageUpload from "~/components/ui/ImageUpload";
 import Modal from "~/components/ui/Modal";
@@ -35,6 +36,7 @@ const PRIORITY_COLORS: Record<AlertPriority, { bg: string; border: string; text:
 export default function SendAlertPage() {
   const { departments, addAlert } = useApp();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState<FormData>({
@@ -86,27 +88,30 @@ export default function SendAlertPage() {
 
   async function handleSend() {
     setSending(true);
-    await new Promise(r => setTimeout(r, 1000));
 
     const depts: AlertDeptDelivery[] = form.selectedDepts.map(id => ({
       departmentId: id,
       status: "Delivered",
     }));
 
-    addAlert({
-      title: form.title,
-      description: form.description,
-      priority: form.priority,
-      status: "Delivered",
-      imageUrl: form.imageUrl,
-      sentBy: "Sunil Perera",
-      departments: depts,
-    });
-
-    setSending(false);
-    setConfirmOpen(false);
-    setSent(true);
-    showToast("success", "Emergency alert sent successfully!", `Alert dispatched to ${form.selectedDepts.length} department(s).`);
+    try {
+      await addAlert({
+        title: form.title,
+        description: form.description,
+        priority: form.priority,
+        status: "Delivered",
+        imageUrl: form.imageUrl,
+        sentBy: user?.fullName ?? "Administrator",
+        departments: depts,
+      });
+      setConfirmOpen(false);
+      setSent(true);
+      showToast("success", "Emergency alert sent successfully!", `Alert dispatched to ${form.selectedDepts.length} department(s).`);
+    } catch (err) {
+      showToast("error", "Failed to send alert", err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSending(false);
+    }
   }
 
   const activeDepts = departments.filter(d => d.status === "Active");

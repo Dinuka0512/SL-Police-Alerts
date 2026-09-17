@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { authenticateToken } from "../middleware/authMiddleware";
+
 import {
   createMessage,
   getAllMessages,
@@ -9,6 +11,8 @@ import {
 } from "../controllers/messageController";
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.post("/", createMessage);
 

@@ -1,12 +1,13 @@
 import React from "react";
-import type { AlertPriority, UserStatus, DeptStatus, AlertStatus, DeliveryStatus, UserRole } from "~/context/AppContext";
+import type { AlertPriority, UserStatus, DeptStatus, AlertStatus, DeliveryStatus, UserRole, PenaltyStatus } from "~/context/AppContext";
 
 type BadgeVariant =
   | "active" | "inactive"
   | "delivered" | "pending" | "failed"
   | "sent"
   | "critical" | "high" | "medium" | "low"
-  | "admin" | "officer" | "dept-officer";
+  | "admin" | "officer" | "dept-officer"
+  | "paid" | "unpaid";
 
 interface BadgeProps {
   variant: BadgeVariant;
@@ -28,6 +29,8 @@ const VARIANT_MAP: Record<BadgeVariant, { cls: string; label: string }> = {
   admin:       { cls: "badge-admin",       label: "Admin" },
   officer:     { cls: "badge-officer",     label: "Police Officer" },
   "dept-officer": { cls: "badge-dept-officer", label: "Department Officer" },
+  paid:        { cls: "badge-paid",        label: "Paid" },
+  unpaid:      { cls: "badge-unpaid",      label: "Not Paid" },
 };
 
 export function statusToBadge(status: UserStatus | DeptStatus): BadgeVariant {
@@ -51,6 +54,10 @@ export function roleToBadge(r: UserRole): BadgeVariant {
   if (r === "Admin") return "admin";
   if (r === "Police Officer") return "officer";
   return "dept-officer";
+}
+
+export function penaltyStatusToBadge(s: PenaltyStatus): BadgeVariant {
+  return s === "Paid" ? "paid" : "unpaid";
 }
 
 export default function Badge({ variant, label, dot = true }: BadgeProps) {

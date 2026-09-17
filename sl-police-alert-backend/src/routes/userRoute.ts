@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { authenticateToken } from "../middleware/authMiddleware";
+
 import {
   createUser,
   getAllUsers,
@@ -9,6 +11,8 @@ import {
 } from "../controllers/userController";
 
 const router = Router();
+
+router.use(authenticateToken);
 
 router.post("/", createUser);
 router.get("/", getAllUsers);

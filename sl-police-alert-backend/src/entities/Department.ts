@@ -13,4 +13,16 @@ export class Department {
 
   @Column()
   name!: string;
+
+  @Column({ default: "" })
+  code!: string;
+
+  @Column({ default: "" })
+  description!: string;
+
+  @Column({ default: "Active" })
+  status!: string;
+
+  @Column({ default: "" })
+  createdAt!: string;
 }

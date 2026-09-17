@@ -6,11 +6,13 @@ import {
   Building2,
   Send,
   History,
+  Receipt,
   Settings,
   LogOut,
   Shield,
   Bell,
 } from "lucide-react";
+import { useAuth } from "~/context/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,12 +23,26 @@ const NAV_ITEMS = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/users", icon: Users, label: "Users" },
   { to: "/departments", icon: Building2, label: "Departments" },
+  { to: "/penalties", icon: Receipt, label: "Penalties" },
   { to: "/send-alert", icon: Send, label: "Send Alert" },
   { to: "/alert-history", icon: History, label: "Alert History" },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const initials = user
+    ? user.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "AD";
+  const displayName = user?.fullName ?? "Administrator";
+  const displayRole = user?.role ?? "Super Admin";
+
+  function handleLogout() {
+    onClose();
+    logout();
+    navigate("/login");
+  }
 
   return (
     <>
@@ -87,11 +103,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </NavLink>
             <button
               className="nav-item danger"
-              onClick={() => {
-                onClose();
-                // In real app: clear session. Here just navigate to root.
-                navigate("/");
-              }}
+              onClick={handleLogout}
             >
               <LogOut className="nav-icon" size={18} />
               <span>Logout</span>
@@ -107,12 +119,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1e40af,#0f2557)",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               fontSize: 13, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,0.15)"
-            }}>SP</div>
+            }}>{initials}</div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                Sunil Perera
+                {displayName}
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>Super Admin</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{displayRole}</div>
             </div>
           </div>
         </div>

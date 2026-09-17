@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router";
 import { Save, ArrowLeft } from "lucide-react";
 import { useApp } from "~/context/AppContext";
 import { useToast } from "~/context/ToastContext";
+import { isProtectedAdmin } from "~/lib/constants";
 import type { UserRole, UserStatus } from "~/context/AppContext";
 
 interface FormErrors {
@@ -10,6 +11,16 @@ interface FormErrors {
   email?: string;
   phone?: string;
   departmentId?: string;
+}
+
+function Field({ label, id: fid, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor={fid}>{label}{required && <span className="required">*</span>}</label>
+      {children}
+      {error && <div className="form-error">⚠ {error}</div>}
+    </div>
+  );
 }
 
 export default function EditUserPage() {
@@ -54,6 +65,26 @@ export default function EditUserPage() {
     );
   }
 
+  if (isProtectedAdmin(user.email)) {
+    return (
+      <div>
+        <div className="page-header">
+          <Link to="/users" className="btn btn-ghost btn-sm" style={{ marginBottom: 8, padding: "6px 4px" }}>
+            <ArrowLeft size={16} /> Back to Users
+          </Link>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a" }}>Edit User</h1>
+          <p style={{ fontSize: 14, color: "#64748b" }}>This account is protected</p>
+        </div>
+        <div className="card" style={{ maxWidth: 680 }}>
+          <div className="empty-state">
+            <p>The default administrator account cannot be edited.</p>
+            <Link to="/users" className="btn btn-secondary btn-sm">Back to Users</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const set = (key: keyof typeof form, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
     setErrors(prev => ({ ...prev, [key]: undefined }));
@@ -74,20 +105,15 @@ export default function EditUserPage() {
     e.preventDefault();
     if (!validate()) return;
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
-    updateUser(id!, form);
-    showToast("success", "User updated successfully", `${form.fullName}'s account has been updated.`);
-    setSaving(false);
-    navigate("/users");
+    try {
+      await updateUser(id!, form);
+      showToast("success", "User updated successfully", `${form.fullName}'s account has been updated.`);
+      navigate("/users");
+    } catch (err) {
+      showToast("error", "Failed to update user", err instanceof Error ? err.message : "Something went wrong");
+      setSaving(false);
+    }
   }
-
-  const Field = ({ label, id: fid, error, required, children }: { label: string; id: string; error?: string; required?: boolean; children: React.ReactNode }) => (
-    <div className="form-group">
-      <label className="form-label" htmlFor={fid}>{label}{required && <span className="required">*</span>}</label>
-      {children}
-      {error && <div className="form-error">⚠ {error}</div>}
-    </div>
-  );
 
   return (
     <div>
