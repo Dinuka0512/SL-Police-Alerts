@@ -3,6 +3,9 @@ import { getAuthState } from '@/store/auth';
 export const API_BASE_URL: string =
   process.env.EXPO_PUBLIC_API_URL ?? 'http://8.234.94.139:5000';
 
+export const ML_API_BASE_URL: string =
+  process.env.EXPO_PUBLIC_ML_API_URL ?? 'http://8.234.94.139:8000';
+
 export class ApiError extends Error {
   status: number;
 

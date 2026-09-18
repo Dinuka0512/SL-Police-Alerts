@@ -1,19 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/screen-header';
 import { RISK_COLORS, SriLankaMap } from '@/components/sri-lanka-map';
 import { TabBar } from '@/components/tab-bar';
-import {
-  DISTRICT_PREDICTIONS,
-  PREDICTION_PERIOD,
-  PREDICTION_UPDATED_AT,
-} from '@/data/district-predictions';
+import { predictionService } from '@/services';
 import { useAuth } from '@/store/auth';
-import type { RiskLevel } from '@/types';
+import type { DistrictPrediction, RiskLevel } from '@/types';
 
 const SUMMARY_META: {
   level: RiskLevel;
@@ -24,10 +20,18 @@ const SUMMARY_META: {
   { level: 'Low', icon: 'shield-checkmark' },
 ];
 
+function todayString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function AccidentsScreen() {
   const router = useRouter();
   const { token } = useAuth();
 
+  const [predictions, setPredictions] = useState<DistrictPrediction[]>([]);
+  const [predictionDate, setPredictionDate] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [predictionError, setPredictionError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{
     latitude: number;
     longitude: number;
@@ -39,15 +43,33 @@ export default function AccidentsScreen() {
     if (!token) router.replace('/login');
   }, [token, router]);
 
-  const summary = useMemo(() => {
-    const counts: Record<RiskLevel, number> = { High: 0, Medium: 0, Low: 0 };
-    for (const prediction of DISTRICT_PREDICTIONS) counts[prediction.risk] += 1;
-    return counts;
+  const loadPredictions = useCallback(async () => {
+    setLoading(true);
+    setPredictionError(null);
+    try {
+      const result = await predictionService.getForDate(todayString());
+      setPredictions(result);
+      setPredictionDate(todayString());
+    } catch {
+      setPredictionError('Unable to load predictions right now. Pull or retry later.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadPredictions();
+  }, [loadPredictions]);
+
+  const summary = useMemo(() => {
+    const counts: Record<RiskLevel, number> = { High: 0, Medium: 0, Low: 0 };
+    for (const prediction of predictions) counts[prediction.risk] += 1;
+    return counts;
+  }, [predictions]);
+
   const totalAccidents = useMemo(
-    () => DISTRICT_PREDICTIONS.reduce((sum, item) => sum + item.count, 0),
-    []
+    () => predictions.reduce((sum, item) => sum + item.count, 0),
+    [predictions]
   );
 
   const handleLocate = async () => {
@@ -75,7 +97,7 @@ export default function AccidentsScreen() {
     <View className="flex-1 bg-white">
       <ScreenHeader
         title="Accident Predictions"
-        subtitle={`District risk · Updated ${PREDICTION_UPDATED_AT}`}
+        subtitle={`District risk · Updated ${predictionDate || '—'}`}
       />
 
       <View className="px-4 pt-4 flex-row">
@@ -95,7 +117,7 @@ export default function AccidentsScreen() {
               />
             </View>
             <Text className="text-slate-900 text-xl font-bold mt-1.5">
-              {summary[item.level]}
+              {loading ? '…' : summary[item.level]}
             </Text>
             <Text className="text-slate-500 text-[10px] font-semibold uppercase">
               {item.level} districts
@@ -106,21 +128,40 @@ export default function AccidentsScreen() {
 
       <View className="px-4 pt-2 pb-2">
         <Text className="text-slate-500 text-[11px]">
-          {PREDICTION_PERIOD} · {totalAccidents} reported accidents. Pinch to zoom,
-          drag to move, tap a district for details.
+          Predicted next 7 days · {totalAccidents} accidents forecast. Pinch to
+          zoom, drag to move, tap a district for details.
         </Text>
-        {locationError && (
-          <Text className="text-red-600 text-[11px] mt-1">{locationError}</Text>
+        {(locationError || predictionError) && (
+          <Text className="text-red-600 text-[11px] mt-1">
+            {locationError ?? predictionError}
+          </Text>
+        )}
+        {!predictionError && (
+          <Text
+            onPress={loadPredictions}
+            className="text-blue-700 text-[11px] mt-1 font-semibold"
+          >
+            Tap to refresh
+          </Text>
         )}
       </View>
 
       <View className="flex-1 bg-white">
-        <SriLankaMap
-          predictions={DISTRICT_PREDICTIONS}
-          userCoords={coords}
-          locating={locating}
-          onRequestLocation={handleLocate}
-        />
+        {loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#003366" />
+            <Text className="text-slate-500 text-[11px] mt-2">
+              Loading predictions…
+            </Text>
+          </View>
+        ) : (
+          <SriLankaMap
+            predictions={predictions}
+            userCoords={coords}
+            locating={locating}
+            onRequestLocation={handleLocate}
+          />
+        )}
       </View>
 
       <TabBar active="accidents" />

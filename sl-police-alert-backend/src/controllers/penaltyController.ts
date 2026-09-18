@@ -5,6 +5,10 @@ import { AppDataSource } from "../config/data-source";
 
 import { Penalty } from "../entities/Penalty";
 
+import { EmailUtil } from "../utils/EmailUtil";
+
+const emailUtil = new EmailUtil();
+
 const penaltyRepository = AppDataSource.getMongoRepository(Penalty);
 
 const normalizeId = (paramId: string | string[]): string =>
@@ -42,6 +46,18 @@ export const createPenalty = async (
     });
 
     const savedPenalty = await penaltyRepository.save(penalty);
+
+    if (savedPenalty.email) {
+      try {
+        await emailUtil.sendEmail(
+          savedPenalty.email,
+          "Penalty Issued",
+          `Dear Sir/Madam,\n\nA traffic penalty has been issued against you.\n\nPenalty Code: ${savedPenalty.code || "N/A"}\nViolation: ${savedPenalty.violation}\nFee: Rs. ${savedPenalty.fee}\nVehicle: ${savedPenalty.vehicle || "N/A"}\nDate: ${savedPenalty.date}\nLocation: ${savedPenalty.location || "N/A"}\nStatus: ${savedPenalty.status}\n\nPlease settle the penalty before the due date.\n\nBest regards,\nSri Lanka Police`
+        );
+      } catch (emailError) {
+        console.error("Failed to send penalty creation email:", emailError);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -203,6 +219,8 @@ export const updatePenalty = async (
     const { code, violation, fee, vehicle, nic, email, location, date, status, issuedBy } =
       req.body;
 
+    const previousStatus = penalty.status;
+
     if (code !== undefined) penalty.code = code;
     if (violation !== undefined) penalty.violation = violation;
     if (fee !== undefined) penalty.fee = fee;
@@ -215,6 +233,18 @@ export const updatePenalty = async (
     if (issuedBy !== undefined) penalty.issuedBy = issuedBy;
 
     const updatedPenalty = await penaltyRepository.save(penalty);
+
+    if (updatedPenalty.email && updatedPenalty.status === "Paid" && previousStatus !== "Paid") {
+      try {
+        await emailUtil.sendEmail(
+          updatedPenalty.email,
+          "Penalty Payment Confirmation",
+          `Dear Sir/Madam,\n\nWe confirm that your traffic penalty has been paid successfully.\n\nPenalty Code: ${updatedPenalty.code || "N/A"}\nViolation: ${updatedPenalty.violation}\nFee Paid: Rs. ${updatedPenalty.fee}\nVehicle: ${updatedPenalty.vehicle || "N/A"}\nDate: ${updatedPenalty.date}\nLocation: ${updatedPenalty.location || "N/A"}\nStatus: Paid\n\nThank you for settling the penalty.\n\nBest regards,\nSri Lanka Police`
+        );
+      } catch (emailError) {
+        console.error("Failed to send penalty payment email:", emailError);
+      }
+    }
 
     res.status(200).json({
       success: true,
